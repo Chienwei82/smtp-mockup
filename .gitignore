@@ -1,0 +1,154 @@
+## ============================================================
+## smtp-mockup — .gitignore
+## .NET 10 / C# 14 / Visual Studio / JetBrains
+## ============================================================
+
+# ---- Memory bank (documentación de sesión, no versionar) ----
+memory-bank/
+*.md.APPEND-MARKER
+
+# ---- Datos de runtime (nunca en el repo) ----
+data/
+certs/
+*.pfx
+*.p12
+
+# ---- Build output ----
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Aa]rtifacts/
+publish/
+*.publishsettings
+*.pubxml
+*.trx
+*.coverage
+*.coveragexml
+TestResults/
+*.nupkg
+*.snupkg
+*.user
+project.lock.json
+project.fragment.lock.json
+artifacts.lock.json
+packages.lock.json
+*.csproj.user
+*.sln.docstates
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sln.docstates
+
+# ---- User-specific files ----
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.dbmdl
+*.jfm
+
+# ---- Build results / logs ----
+[Dd]ebug/
+[Rr]elease/
+[Dd]ebugPublic/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# ---- Visual Studio ----
+.vs/
+*.dotsettings
+*.db
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.scc
+*.opensdf
+*.sdf
+*.cache
+*.VC.db.locks
+*.aps
+*.ncb
+*.twproj
+*.mm
+*.tlog
+*.bak
+*.lsdb
+*.step
+*.unodb
+*.tlog
+
+# ---- NuGet ----
+*.nupkg
+*.snupkg
+**/[Nn]u[Gg]et/*
+**/packages.lock.json
+project.lock.json
+project.fragment.lock.json
+
+# ---- Rider / JetBrains ----
+.idea/
+*.sln.iml
+*.csproj.iml
+*.user
+*.userprefs
+*.idea/
+
+# ---- VS Code ----
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ---- OS ----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ---- Certificados / secretos ----
+*.pfx
+*.p12
+*.snk
+*.key
+*.pem
+.env
+.env.*
+secrets.json
+appsettings.Local.json
+appsettings.*.Local.json
+
+# ---- Temporales ----
+*.tmp
+*.bak
+*.orig
+*.rej
+*.userprefs

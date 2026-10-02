@@ -1,0 +1,29 @@
+# Normalización de fin de línea: LF en el repo, CRLF en Windows al checkout
+* text=auto
+
+*.cs        text diff=csharp
+*.csproj    text
+*.sln       text
+*.slnx      text
+*.props     text
+*.targets   text
+*.json      text
+*.yml       text
+*.yaml      text
+*.md        text
+*.ps1       text eol=crlf
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Binarios que nunca deben tratarse como texto
+*.dll       binary
+*.exe       binary
+*.pdb       binary
+*.so        binary
+*.dylib     binary
+*.a         binary
+*.zip       binary
+*.nupkg     binary
+
+# JSON de datos generados: marcar como linguist-generated
+data/**     linguist-generated=true -diff
