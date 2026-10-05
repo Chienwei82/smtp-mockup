@@ -1,0 +1,129 @@
+name: CI
+
+# Se dispara en cada PR (que es como se llega a main, porque main está protegida) y también
+# en cada push a main, para comprobar que lo que se ha merged sigue en verde.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un PR nuevo empuja la corrida anterior: sus resultados ya no sirven de nada.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# El workflow solo lee el repo: no necesita escribir nada en él.
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    # Sin tope, un test colgado se come los 6 h del runner. La suite tarda ~1 min en verde.
+    timeout-minutes: 20
+    strategy:
+      # Que se vea qué plataforma falla en vez de cancelar las demás al primer fallo.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          # Sin esto se usaría el último SDK instalado en el runner, que no es el 10.0.112
+          # que fija global.json, y el fallo aparecería como un error de compilación
+          # incomprensible en vez de como "no tienes el SDK".
+          global-json-file: global.json
+
+      # No se usa `cache: true` de setup-dotnet a propósito: exige un packages.lock.json en la
+      # raíz y este repo no lo tiene, así que la acción fallaría con "Dependencies lock file is
+      # not found". La clave es el hash de Directory.Packages.props, que es donde están las
+      # versiones (gestión centralizada de paquetes).
+      - name: Cache de paquetes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore smtp-mockup.slnx
+
+      - name: Build (los avisos son errores)
+        run: dotnet build smtp-mockup.slnx --no-restore -c Release -warnaserror
+
+      # -m:1 serializa los proyectos de test. En una máquina de 2 o 4 núcleos (un runner de GitHub)
+      # los cinco proyectos de la solución en paralelo se pelean por la CPU, y con la suite
+      # entera ya se vieron fallos falsos en pruebas de sockets que no tienen nada que ver con
+      # el watcher. Serializar cuesta unos segundos y quita esa variable.
+      - name: Test
+        run: >-
+          dotnet test smtp-mockup.slnx --no-build -c Release -m:1
+          --logger "trx;LogFileName=tests.trx"
+          --results-directory TestResults
+
+      - name: Subir resultados (solo si falla)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults/*.trx
+
+  publish:
+    name: publish (${{ matrix.rid }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache de paquetes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # El script es de Python, no de shell: en windows-latest no existe `python3`.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # --skip-tests porque esta matriz depende de `test`: repetir aquí la suite entera en las
+      # tres plataformas solo duplicaría el gasto sin comprobar nada que el otro job no compruebe.
+      # El script igual hace restore + build + publish, y verify_publish + verify_zip ya
+      # comprueban que el wwwroot de Blazor viaja y que data/ y certs/ no se empaquetan.
+      - name: Publicar y empaquetar
+        run: python scripts/publish.py --rid ${{ matrix.rid }} --skip-tests --zip
+
+      # El zip vive 30 días como artefacto de la corrida, no en el repo: es un binario de
+      # 55 MB que no tiene sentido versionar.
+      - name: Subir el zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: smtp-mockup-${{ matrix.rid }}
+          path: publish/smtp-mockup-${{ matrix.rid }}.zip
+          retention-days: 30

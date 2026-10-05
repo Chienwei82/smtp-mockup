@@ -362,6 +362,53 @@ Notas:
 - Cero dependencias nativas: el mismo publish vale para Windows, Linux y macOS usando su RID.
 - `publish/` está en `.gitignore` y no se versiona: son ~57 MB de binario por RID.
 
+## Integración continua
+
+Hay un workflow en [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Se dispara **en cada
+PR** y en cada push a `main`, y hace dos cosas:
+
+| Job | Qué hace |
+|---|---|
+| `test (ubuntu/windows/macos)` | `dotnet restore` → `dotnet build -warnaserror` → suite completa en las tres plataformas |
+| `publish (linux-x64 / win-x64 / osx-arm64)` | Corre `scripts/publish.py --zip` en el runner de cada plataforma y sube el `.zip` como artefacto de la corrida |
+
+No hay despliegue a ningún sitio: nada se publica en un servidor, solo se generan los zips. Cada
+PR da tres zips descargables desde la pestaña **Artifacts**, uno por plataforma.
+
+Tres detalles del workflow que no son obvios:
+
+- **`dotnet test -m:1`**: serializa los cinco proyectos de test. Los runners de GitHub tienen 2 o 4
+  núcleos y, con la solución entera en paralelo, ya se vieron fallar pruebas de sockets por falta
+  de CPU y no por un fallo real.
+- **Caché de NuGet a mano** en vez de `cache: true` de `setup-dotnet`: esa opción exige un
+  `packages.lock.json` en la raíz y este repo no lo tiene, así que la acción fallaría.
+- **`global-json-file: global.json`**: instala el SDK 10.0.112 que fija el repo, en vez del último
+  que traiga el runner.
+
+### `main` está protegida
+
+`main` no admite pushes directos: todo entra por PR, y el PR no se puede mergear mientras el CI
+esté en rojo o haya conflictos.
+
+- **No se exige aprobación de nadie.** En un repositorio de una sola persona, exigir un revisor
+  bloquearía todos los PR: GitHub no deja aprobar el propio PR. La regla que queda es la que
+  importa aquí —nada llega a `main` sin pasar los tests— y el resto es disciplina tuya.
+- **Los administradores también están sujetos.** Si alguna vez hay que saltarse la regla
+  (un CI roto que no arregla ningún push, por ejemplo), se quita la protección desde
+  *Settings → Branches*, se empuja, y se vuelve a activar. Ojo: con la protección puesta no hay
+  atajo.
+
+Flujo de trabajo:
+
+```bash
+git switch -c feat/mi-cambio     # nunca commitees directamente en main
+# ... hacer los cambios ...
+python3 scripts/publish.py --zip  # en local, antes de abrir el PR
+git commit -am "..." && git push -u origin feat/mi-cambio
+gh pr create --fill             # el CI arranca solo
+gh pr merge --squash --delete-branch
+```
+
 ## Instalarlo como servicio de Windows
 
 Requiere PowerShell **como Administrador**.
