@@ -23,6 +23,12 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
+# Acciones fijadas por major (no por commit) y todas ya en node24: con las v4 GitHub avisa
+# "Node.js 20 is deprecated" en cada job y las ejecuta igualmente sobre Node 24.
+# Para subirlas hay que mirar los inputs de la versión nueva, porque no todas mantienen
+# los mismos: se comprobó que checkout@v7, cache@v6, setup-dotnet@v6, setup-python@v7 y
+# upload-artifact@v7 siguen aceptando los que se usan aquí.
+
 jobs:
   test:
     name: test (${{ matrix.os }})
@@ -35,9 +41,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           # Sin esto se usaría el último SDK instalado en el runner, que no es el 10.0.112
           # que fija global.json, y el fallo aparecería como un error de compilación
@@ -49,7 +55,7 @@ jobs:
       # not found". La clave es el hash de Directory.Packages.props, que es donde están las
       # versiones (gestión centralizada de paquetes).
       - name: Cache de paquetes NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
@@ -65,15 +71,21 @@ jobs:
       # los cinco proyectos de la solución en paralelo se pelean por la CPU, y con la suite
       # entera ya se vieron fallos falsos en pruebas de sockets que no tienen nada que ver con
       # el watcher. Serializar cuesta unos segundos y quita esa variable.
+      #
+      # LogFilePrefix y no LogFileName: con LogFileName los cinco proyectos escriben todos en
+      # TestResults/tests.trx y cada uno pisa al anterior ("WARNING: Overwriting results file",
+      # 4 veces). Al fallar, el artefacto que se sube tenía los resultados del ÚLTIMO proyecto
+      # solo (108 tests de 317) y los del proyecto que falló no estaban en ninguna parte.
+      # Con LogFilePrefix vstest añade sufijo y sale un .trx por proyecto.
       - name: Test
         run: >-
           dotnet test smtp-mockup.slnx --no-build -c Release -m:1
-          --logger "trx;LogFileName=tests.trx"
+          --logger "trx;LogFilePrefix=tests"
           --results-directory TestResults
 
       - name: Subir resultados (solo si falla)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.os }}
           path: TestResults/*.trx
@@ -94,21 +106,21 @@ jobs:
           - os: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
       - name: Cache de paquetes NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # El script es de Python, no de shell: en windows-latest no existe `python3`.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -122,7 +134,7 @@ jobs:
       # El zip vive 30 días como artefacto de la corrida, no en el repo: es un binario de
       # 55 MB que no tiene sentido versionar.
       - name: Subir el zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smtp-mockup-${{ matrix.rid }}
           path: publish/smtp-mockup-${{ matrix.rid }}.zip
