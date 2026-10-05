@@ -44,6 +44,7 @@ import shutil
 import subprocess
 import sys
 import time
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -459,6 +460,112 @@ def verify_publish(target: Path, rid: str, console: Console) -> list[str]:
     return problems
 
 
+# --------------------------------------------------------------------------------------
+# Empaquetado (SPEC 11.3, criterio 19)
+# --------------------------------------------------------------------------------------
+
+# Lo que va al zip. Se empaqueta la CARPETA, no el binario suelto: los static web assets
+# de Blazor son ficheros y no se pueden incrustar en el ejecutable, asi que un .exe sin
+# su wwwroot arranca con una UI muerta (SPEC 11.3, criterio 19).
+ZIP_INCLUDE = (
+    "wwwroot",
+    "appsettings.json",
+    "appsettings.Development.json",
+)
+
+
+def zip_name_for(rid: str) -> str:
+    return f"smtp-mockup-{rid}.zip"
+
+
+def build_zip(target: Path, rid: str, console: Console) -> Path:
+    """Empaqueta el RID en publish/smtp-mockup-<rid>.zip, junto a las carpetas.
+
+    El zip queda en publish/ (no dentro de publish/<rid>/) para que un refresh posterior no
+    se lo lleve por delante ni acabe incluyendose a si mismo.
+
+    Se excluyen data/, certs/ y logs/ a proposito: son datos de quien prueba el mockup
+    (correos recibidos y el PFX autofirmado, que ademas es una clave privada). Repartir
+    un certificado dentro de un zip que va a otra gente es justo lo que RNF-07 prohibe.
+    """
+    archive = PUBLISH_ROOT / zip_name_for(rid)
+    exe = executable_name(rid)
+
+    if not (target / exe).is_file():
+        raise FileNotFoundError(f"no hay {exe} en {target} que empaquetar")
+
+    before = archive.stat().st_size if archive.is_file() else 0
+    if archive.is_file():
+        # zipfile abre en modo "w", que recorta el archivo a cero antes de escribir: si se
+        # falla a mitad, el zip anterior queda corrupto con nombre de bueno. Se aparta.
+        archive.unlink()
+
+    added = 0
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
+        # El ejecutable se guarda con ZIP_STORED (sin comprimir): son 55 MB de binario
+        # autoextraíble que ya vienen comprimidos dentro, y DEFLATED sobre eso solo gasta
+        # CPU y no ahorra casi nada.
+        bundle.write(target / exe, arcname=exe, compress_type=zipfile.ZIP_STORED)
+
+        for relative in ZIP_INCLUDE:
+            source = target / relative
+            if source.is_file():
+                bundle.write(source, arcname=relative)
+                added += 1
+            elif source.is_dir():
+                for path in sorted(source.rglob("*")):
+                    if path.is_file():
+                        bundle.write(path, arcname=path.relative_to(target))
+                        added += 1
+
+    console.kv("zip", f"{archive.name} ({human_size(archive.stat().st_size)}, {added + 1} ficheros)")
+    if before:
+        console.info(f"reemplazado el zip anterior ({human_size(before)})")
+
+    return archive
+
+
+def verify_zip(archive: Path, rid: str, console: Console) -> list[str]:
+    """Abre el zip recien escrito y comprueba que no le falta lo que la UI necesita.
+
+    Un zip que se genera bien y no lleva el wwwroot es un zip que parece entregable y no
+    funciona: el error sale en el navegador de quien lo descomprime, no aqui.
+    """
+    problems: list[str] = []
+
+    with zipfile.ZipFile(archive) as bundle:
+        broken = bundle.testzip()
+        if broken is not None:
+            problems.append(
+                f"el zip esta corrupto: el CRC de '{broken}' no cuadra"
+            )
+
+        names = set(bundle.namelist())
+
+        exe = executable_name(rid)
+        if exe not in names:
+            problems.append(f"el zip no lleva {exe}")
+
+        if "wwwroot/_framework/blazor.web.js" not in names:
+            problems.append(
+                "el zip no lleva wwwroot/_framework/blazor.web.js: al descomprimirlo, la UI "
+                "se vera pero no respondera"
+            )
+
+        if "appsettings.json" not in names:
+            problems.append("el zip no lleva appsettings.json: arrancara con la config por defecto")
+
+        leaked = [n for n in names if n.startswith(("data/", "certs/", "logs/"))]
+        if leaked:
+            problems.append(
+                f"el zip incluye datos del usuario que no deben repartirse: {', '.join(leaked[:5])}"
+            )
+
+        console.kv("contenido", f"{len(names)} entradas en el zip")
+
+    return problems
+
+
 def ensure_publish_ignored(console: Console) -> None:
     """publish/ no debe acabar en el repo. Se comprueba en cada ejecucion.
 
@@ -569,6 +676,8 @@ def build_parser() -> argparse.ArgumentParser:
             "  python3 scripts/publish.py --rid linux-x64  # solo un RID\n"
             "  python3 scripts/publish.py --skip-tests      # build + publish\n"
             "  python3 scripts/publish.py --clean-data      # borra data/, certs/, logs/\n"
+            "  python3 scripts/publish.py --zip             # ademas, un .zip para repartir\n"
+            "  python3 scripts/publish.py --zip-only         # reempaqueta sin republicar\n"
         ),
     )
     parser.add_argument(
@@ -598,15 +707,26 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Borrar tambien data/, certs/ y logs/ del RID (correos recibidos y PFX).",
     )
-    parser.add_argument("--no-color", action="store_true", help="Salida sin codigos de color.")
+    parser.add_argument(
+        "--no-color", action="store_true", help="Salida sin codigos de color."
+    )
+    parser.add_argument(
+        "--zip",
+        action="store_true",
+        help="Ademas de publicar, empaqueta cada RID en publish/smtp-mockup-<rid>.zip "
+        "listo para repartir (SPEC 11.3, criterio 19).",
+    )
+    parser.add_argument(
+        "--zip-only",
+        action="store_true",
+        help="No publicar: solo re-empaquetar en zip los RIDs que ya estan en publish/.",
+    )
     parser.add_argument(
         "--list-rids",
         action="store_true",
         help="Mostrar los RIDs que se publicarian y salir.",
     )
     return parser
-
-
 
 # --------------------------------------------------------------------------------------
 # Main
@@ -640,6 +760,54 @@ def main(argv: list[str] | None = None) -> int:
     if args.list_rids:
         for rid in rids:
             print(f"  {rid}")
+        return 0
+
+    # --zip-only implica --zip: empaquetar lo ya publicado es justamente el caso de uso,
+    # asi que se deduce en vez de exigir los dos flags y que uno se olvide del otro.
+    if args.zip_only:
+        args.zip = True
+
+    # ---- Solo empaquetar ----------------------------------------------------------
+    if args.zip_only:
+        console.step(1, 1 + len(rids), "Reempaquetando los RIDs ya publicados")
+        ensure_publish_ignored(console)
+
+        zip_failures: dict[str, list[str]] = {}
+        for rid in rids:
+            target = PUBLISH_ROOT / rid
+            if not target.is_dir():
+                console.fail(f"publish/{rid}/ no existe: publicalo antes de empaquetarlo")
+                zip_failures[rid] = ["no hay nada publicado que empaquetar"]
+                continue
+
+            try:
+                archive = build_zip(target, rid, console)
+            except (FileNotFoundError, OSError) as exception:
+                console.fail(f"no se pudo empaquetar {rid}: {exception}")
+                zip_failures[rid] = [str(exception)]
+                continue
+
+            problems = verify_zip(archive, rid, console)
+            if problems:
+                zip_failures[rid] = problems
+                for problem in problems:
+                    console.fail(problem)
+            else:
+                console.ok(f"{archive.name} verificado (ejecutable + wwwroot + appsettings)")
+
+        print()
+        if zip_failures:
+            console.banner("empaquetado con problemas")
+            for rid, problems in zip_failures.items():
+                console.fail(f"{rid}:")
+                for problem in problems:
+                    console.detail(problem)
+            return 1
+
+        console.banner("empaquetado completado")
+        for rid in rids:
+            archive = PUBLISH_ROOT / zip_name_for(rid)
+            print(f"  {console.c.green('OK')} publish/{archive.name}  ({human_size(archive.stat().st_size)})")
         return 0
 
     total_steps = 3 + len(rids)
@@ -768,6 +936,21 @@ def main(argv: list[str] | None = None) -> int:
         console.ok(f"publicado en publish/{rid}/ en {result.duration:.1f}s")
 
         problems = verify_publish(target, rid, console)
+
+        # El zip solo se arma si el artefacto esta bien: empaquetar un publish con el
+        # wwwroot incompleto produce un zip que parece entregable y no funciona.
+        if not problems and args.zip:
+            try:
+                archive = build_zip(target, rid, console)
+            except (FileNotFoundError, OSError) as exception:
+                problems = [f"no se pudo empaquetar: {exception}"]
+            else:
+                zip_problems = verify_zip(archive, rid, console)
+                if zip_problems:
+                    problems = zip_problems
+                else:
+                    console.ok("zip verificado (ejecutable + wwwroot + appsettings, sin datos)")
+
         if problems:
             problems_by_rid[rid] = problems
             for problem in problems:
@@ -796,11 +979,29 @@ def main(argv: list[str] | None = None) -> int:
                 f"      servicio:  pwsh -File scripts/install-service.ps1 "
                 f"-Path publish/{rid}/{exe}"
             )
+        if args.zip:
+            archive = PUBLISH_ROOT / zip_name_for(rid)
+            print(
+                f"      repartir:  publish/{archive.name}  "
+                f"({human_size(archive.stat().st_size)})"
+            )
 
     print()
-    console.info(
-        "reparte la CARPETA completa, no solo el binario: sin wwwroot la UI no funciona"
-    )
+    if args.zip:
+        console.info(
+            "cada zip lleva el ejecutable y su wwwroot, y NO los correos ni el PFX que "
+            "hallas en publish/<rid>/"
+        )
+        if any(not rid.startswith("win") for rid in rids):
+            console.info(
+                "al descomprimir en Linux/macOS, el binario puede salir sin permiso de "
+                "ejecucion: chmod +x smtp-mockup"
+            )
+    else:
+        console.info(
+            "reparte la CARPETA completa, no solo el binario: sin wwwroot la UI no funciona"
+        )
+        console.info("para un zip listo para repartir: python3 scripts/publish.py --zip")
     if args.clean_data:
         console.warn(
             "has usado --clean-data: se han borrado los correos y el certificado del RID"

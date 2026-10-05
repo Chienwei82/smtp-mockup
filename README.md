@@ -310,6 +310,8 @@ Lo normal es usar el script, que compila, **pasa los tests** y publica en el ord
 python3 scripts/publish.py                    # compila, testea y publica (RID del host + win-x64)
 python3 scripts/publish.py --rid linux-x64    # sólo un RID
 python3 scripts/publish.py --skip-tests       # sin tests, para iterar rápido
+python3 scripts/publish.py --zip              # además, un .zip listo para repartir
+python3 scripts/publish.py --zip-only         # reempaqueta sin volver a compilar ni testear
 python3 scripts/publish.py --clean-data       # borra data/, certs/ y logs/ del RID
 python3 scripts/publish.py --help             # todas las opciones
 ```
@@ -338,10 +340,18 @@ dotnet publish src/SmtpMockup.Host -p:PublishProfile=win-x64
 MudBlazor) **son archivos**, no se pueden incrustar en el binario. Copiar sólo el `.exe` deja una UI
 que se ve pero no responde: es la falla más confundida de este proyecto.
 
+Por eso `--zip` empaqueta el ejecutable **y** su `wwwroot` en `publish/smtp-mockup-<rid>.zip`, y
+después vuelve a abrir el zip para comprobar que lleva lo que la UI necesita. El zip **no** incluye
+`data/`, `certs/` ni `logs/`: son tus correos y el PFX (una clave privada), y no van repartidos.
+
+Sin el script, a mano:
+
 ```bash
-# Para repartirlo en un zip
 cd publish/win-x64 && zip -r smtp-mockup-win-x64.zip smtp-mockup.exe wwwroot appsettings.json
 ```
+
+> Al descomprimir en Linux o macOS el binario puede salir sin permiso de ejecución (según cómo
+> extraiga tu herramienta): `chmod +x smtp-mockup`.
 
 Notas:
 
@@ -528,16 +538,25 @@ confundir a quien lo lea.
 Sólo hay `.pubxml` para `win-x64`; el publish de Linux hay que hacerlo con los flags a mano (el
 comando está documentado más arriba). Con un `linux-x64.pubxml` los dos serían simétricos.
 
-### 7. Faltan `scripts/publish.ps1` y `publish.sh` 🟢
+### 7. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
 
-SPEC §11.3 los menciona y no existen. Esta sesión verificó el criterio 19 a mano (un `.exe` de
-~57 MB + `wwwroot/` + `appsettings.json` basta, y la UI funciona desde otra carpeta), pero el
-empaquetado en zip que promete el SPEC es un paso manual.
+SPEC §11.3 (criterio 19) los menciona. Ahora hay **un** script, `scripts/publish.py`, que hace
+compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las tres plataformas.
 
-### 8. Todo el trabajo está sin commitear 🟡
+No se hicieron dos scripts (`publish.ps1` + `publish.sh`) a propósito: dos copias de la misma
+lógica se divergen el día que hay que tocar una, y en PowerShell además habría que arrastrar el
+módulo de pruebas de parsing que ya existe para los scripts de servicio. Un script en Python cubre
+Windows, Linux y macOS sin duplicar nada. La SPEC se actualizó en vez de dejar el nombre literal.
 
-El árbol tiene `src/`, `tests/`, `scripts/`, `docs/` y la configuración sin trackear, sobre un único
-commit inicial de documentación. Antes de seguir: un `git add` y un commit por prompt.
+Cerrado además el punto que quedaba abierto de verdad: el zip se **verifica** después de
+escribirse (que lleve el ejecutable, `wwwroot/_framework/blazor.web.js` y `appsettings.json`, y que
+**no** se lleve `data/`, `certs/` ni `logs/`). Verificado descomprimiendo el zip en `/tmp` y
+arrancando desde ahí: UI en 200, estáticos en 200 y correo aceptado.
+
+### 8. ~~Todo el trabajo está sin commitear~~ ✅ resuelto
+
+Estaba todo sin trackear sobre un único commit de documentación. El proyecto está en GitHub con la
+implementación, la documentación y los scripts versionados.
 
 ## Mejoras futuras
 

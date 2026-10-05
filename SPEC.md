@@ -560,8 +560,16 @@ Reglas:
 19. **Plan B documentado y verificado:** si el objetivo de *un solo archivo* (.exe sin carpetas)
     resulta inconsistente con los static web assets, se publica como `exe + wwwroot` en la misma
     carpeta (publicación por defecto de Blazor Web App). El README documenta que hay que copiar
-    **la carpeta completa**, no solo el `.exe`, y se provee `publish.ps1`/`publish.sh` que empaquetan
-    ambas cosas (zip) para distribuir.
+    **la carpeta completa**, no solo el `.exe`, y `scripts/publish.py --zip` empaqueta ambas
+    cosas (zip) para distribuir y **verifica el zip después de escribirlo** (que lleve el
+    ejecutable, `wwwroot/_framework/blazor.web.js` y `appsettings.json`, y que no incluya
+    `data/`, `certs/` ni `logs/`).
+
+    **Un solo script, no dos.** La v2.0 de esta SPEC hablaba de `publish.ps1` + `publish.sh`.
+    Se sustituyen por `scripts/publish.py`: dos copias de la misma lógica divergen en cuanto
+    hay que tocar una, y PowerShell exigiría además arrastrar el módulo de pruebas de parsing
+    que ya existe para los scripts de servicio. Un script en Python cubre Windows, Linux y
+    macOS, y es el que hace las tres plataformas con el mismo comando.
 
 ---
 
