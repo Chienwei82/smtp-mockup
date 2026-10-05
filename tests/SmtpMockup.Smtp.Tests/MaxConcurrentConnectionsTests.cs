@@ -42,8 +42,37 @@ public sealed class MaxConcurrentConnectionsTests
 
         // Al cerrar la primera sesión, el hueco queda libre. Si el recuento no se liberara, el
         // mockup acabaría rechazando conexiones para siempre.
-        using var second = await fixture.ConnectAsync(SecureSocketOptions.None);
-        Assert.True(second.IsConnected);
+        //
+        // La liberación NO es síncrona con el cierre del socket: 'DisconnectAsync' espera al
+        // QUIT del cliente, y el evento SessionCompleted que descuenta la sesión lo dispara
+        // el servidor después, en su propia tarea. Conectar de inmediato compite con ese
+        // evento y el 421 es correcto en ese instante, así que el test sería flaky: en
+        // isolation pasa siempre y con la suite entera en paralelo falla.
+        // Se reintenta con un timeout en vez de con Thread.Sleep, como manda la convención.
+        var deadline = TimeSpan.FromSeconds(10);
+        var started = DateTimeOffset.UtcNow;
+        Exception? last = null;
+
+        while (DateTimeOffset.UtcNow - started < deadline)
+        {
+            try
+            {
+                using var second = await fixture.ConnectAsync(SecureSocketOptions.None);
+                Assert.True(second.IsConnected);
+                return;
+            }
+            catch (SmtpCommandException exception) when (
+                exception.StatusCode == SmtpStatusCode.ServiceNotAvailable)
+            {
+                last = exception;
+                await Task.Delay(50);
+            }
+        }
+
+        Assert.Fail(
+            "The slot was never released: the connection kept getting 421 "
+            + $"{deadline.TotalSeconds:N0}s after the first client disconnected. "
+            + $"Last error: {last?.Message}");
     }
 
     [Fact]
@@ -88,14 +117,25 @@ public sealed class MaxConcurrentConnectionsTests
     }
 
     /// <summary>
-    /// El cliente ve un rechazo de bienvenida, no un error de red: se comprueba el texto para que
-    /// el test siga siendo válido aunque la excepción concreta sea distinta.
+    /// El cliente ve un rechazo de bienvenida, no un error de red, así que se comprueba el
+    /// código de estado y no el texto.
     /// </summary>
+    /// <remarks>
+    /// Se mira <see cref="SmtpCommandException.StatusCode"/> y no
+    /// <c>ErrorCode</c>: <c>SmtpErrorCode</c> sólo tiene cuatro valores
+    /// (<c>MessageNotAccepted</c>, <c>SenderNotAccepted</c>,
+    /// <c>RecipientNotAccepted</c> y <c>UnexpectedStatusCode</c>) y un 421 cae en el
+    /// último. El número de verdad está en <c>StatusCode</c>, que es un
+    /// <c>SmtpStatusCode</c>. La versión anterior buscaba la cadena "421" en el mensaje y
+    /// falla siempre: MailKit separa el código del texto, así que el mensaje del mockup
+    /// llega como "4.7.0 Too many concurrent connections…".
+    /// </remarks>
     private static void AssertMentions421(Exception exception)
     {
-        var text = exception.ToString();
+        var command = Assert.IsType<SmtpCommandException>(exception);
         Assert.True(
-            text.Contains("421", StringComparison.Ordinal),
-            $"Expected a 421 rejection, but got: {exception.GetType().Name}: {exception.Message}");
+            command.StatusCode == SmtpStatusCode.ServiceNotAvailable,
+            $"Expected a 421 rejection, but got {command.StatusCode} ({command.StatusCode}) "
+            + $"with the message: {command.Message}");
     }
 }

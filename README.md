@@ -304,6 +304,26 @@ Los archivos se pueden leer, editar o borrar a mano: la UI se entera sola.
 
 ## Publicación
 
+Lo normal es usar el script, que compila, **pasa los tests** y publica en el orden correcto:
+
+```bash
+python3 scripts/publish.py                    # compila, testea y publica (RID del host + win-x64)
+python3 scripts/publish.py --rid linux-x64    # sólo un RID
+python3 scripts/publish.py --skip-tests       # sin tests, para iterar rápido
+python3 scripts/publish.py --clean-data       # borra data/, certs/ y logs/ del RID
+python3 scripts/publish.py --help             # todas las opciones
+```
+
+No se publica nada si la compilación falla o si hay un test en rojo: es preferible tardar un minuto
+más a repartir un binario roto. Al terminar **verifica el artefacto** (que exista el ejecutable y que
+`wwwroot/_framework/blazor.web.js` esté dentro) y comprueba que `publish/` siga ignorado por git.
+
+Un detalle que el script respeta por ti: al refrescar un RID **no borra `data/`, `certs/` ni
+`logs/`**, porque ahí están los correos que le has mandado y el PFX autofirmado. Se borran sólo con
+`--clean-data`.
+
+Si prefieres hacerlo a mano (o no tienes Python):
+
 ```bash
 # Linux / macOS
 dotnet publish src/SmtpMockup.Host -c Release -r linux-x64 --self-contained \
@@ -330,6 +350,7 @@ Notas:
 - No hace falta `PublishSingleFile` si preferís DLLs sueltas, pero **`wwwroot` sigue siendo
   obligatorio**.
 - Cero dependencias nativas: el mismo publish vale para Windows, Linux y macOS usando su RID.
+- `publish/` está en `.gitignore` y no se versiona: son ~57 MB de binario por RID.
 
 ## Instalarlo como servicio de Windows
 

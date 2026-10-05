@@ -149,6 +149,13 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
     /// Espera a que el watcher reaccione, con tope de tiempo en vez de un <c>Thread.Sleep</c>
     /// fijo: es lo que evita que la prueba sea intermitente en CI.
     /// </summary>
+    /// <remarks>
+    /// Falla si se agota el plazo. Antes devolvía en silencio y dejaba que la aserción
+    /// siguiente decidiera, y eso ocultaba el fallo real: el watcher no había reconstruido
+    /// nada, el test gastaba los 30 s completos y luego pasaba igualmente porque otra vía
+    /// (un <c>RefreshAsync</c> explícito, p. ej.) sí había reconstruido. Un test que espera
+    /// 30 s y aun así sale verde no está probando nada.
+    /// </remarks>
     private async Task WaitForRebuildAsync(MessageDirectoryWatcher watcher)
     {
         var deadline = DateTime.UtcNow.AddSeconds(30);
@@ -161,6 +168,11 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
 
             await Task.Delay(50);
         }
+
+        Assert.Fail(
+            "The watcher never rebuilt the index within 30s of the file being created. "
+            + $"Watched directory: {watcher.WatchedDirectory}. If this is the first run on a "
+            + "machine with a low inotify limit, check fs.inotify.max_user_watches.");
     }
 
     [Fact]

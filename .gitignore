@@ -48,6 +48,10 @@ packages.lock.json
 .idea/
 *.sln.docstates
 
+# ---- Python (scripts/publish.py) ----
+__pycache__/
+*.py[cod]
+
 # ---- User-specific files ----
 *.user
 *.suo
