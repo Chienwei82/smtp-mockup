@@ -74,6 +74,24 @@ public sealed class SmtpListenerBindAddressTests
     }
 
     [Fact]
+    public async Task A_configured_any_bind_address_starts_and_serves_loopback()
+    {
+        // El sondeo de disponibilidad del arranque conectaba contra la propia dirección de bind.
+        // Con 0.0.0.0 eso está mal: Any es una comodín de escucha, no un destino. En Linux
+        // conectar a 0.0.0.0 funciona por casualidad (el kernel lo traduce a loopback) y por eso
+        // el fallo solo aparecía en Windows, donde el connect se rechaza y el arranque expiraba
+        // con un timeout que no señalaba la causa. Este test ata a Any y exige que arranque y
+        // acepte: es el que falla si el sondeo vuelve a usar la dirección de bind.
+        await using var fixture = await SmtpMockupFixture.StartAsync(
+            options => options.Smtp.Plain.BindAddress = "0.0.0.0");
+
+        Assert.Equal(IPAddress.Any, fixture.BindAddress);
+
+        // Any escucha en todas las direcciones, así que el loopback tiene que entrar.
+        Assert.True(await CanConnectAsync(IPAddress.Loopback, fixture.Port));
+    }
+
+    [Fact]
     public async Task An_ipv6_loopback_bind_address_is_honoured()
     {
         await using var fixture = await SmtpMockupFixture.StartAsync(

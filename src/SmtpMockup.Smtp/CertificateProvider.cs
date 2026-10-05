@@ -178,7 +178,7 @@ public sealed class CertificateProvider(
         => X509CertificateLoader.LoadPkcs12FromFile(
             pfxPath,
             password,
-            X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
+            PfxKeyStorage.Flags);
 
     /// <summary>
     /// Busca el certificado de desarrollo de <c>dotnet dev-certs https</c> en el almacén
@@ -221,11 +221,12 @@ public sealed class CertificateProvider(
                 }
 
                 // Se reexporta a PFX para devolver un certificado con clave privada usable y
-                // efímera: así el proceso no deja restos de la clave en el almacén al cerrar.
+                // efímera (en macOS, efímera no es posible: ver PfxKeyStorage). Así el proceso
+                // no deja restos de la clave en el almacén al cerrar.
                 return X509CertificateLoader.LoadPkcs12(
                     certificate.Export(X509ContentType.Pfx),
                     password: string.Empty,
-                    keyStorageFlags: X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
+                    keyStorageFlags: PfxKeyStorage.Flags);
             }
         }
         catch (CryptographicException exception)
