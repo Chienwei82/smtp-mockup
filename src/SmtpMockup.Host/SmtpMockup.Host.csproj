@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmtpMockup.Storage\SmtpMockup.Storage.csproj" />
+    <ProjectReference Include="..\SmtpMockup.Smtp\SmtpMockup.Smtp.csproj" />
+    <ProjectReference Include="..\SmtpMockup.Core\SmtpMockup.Core.csproj" />
+    <!-- La UI (App, Routes, páginas y componentes) vive en una RCL; el Host aporta Kestrel,
+         el ciclo de vida y el composition root (D-06). -->
+    <ProjectReference Include="..\SmtpMockup.Web\SmtpMockup.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UseWindowsService() para el ciclo de vida del SCM (D-10). -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <!-- MudBlazor aporta componentes y sus assets estáticos (_content/MudBlazor). Se referencia
+         explícitamente, además de transitivamente por la RCL, porque es el Host quien sirve
+         esos archivos y quien llama a AddMudServices(). -->
+    <PackageReference Include="MudBlazor" />
+    <!-- Microsoft.Extensions.Logging.EventLog NO se referencia: el framework compartido de
+         ASP.NET Core ya lo incluye (NU1510 lo avisa), y Host usa Microsoft.NET.Sdk.Web. -->
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>smtp-mockup</AssemblyName>
+    <RootNamespace>SmtpMockup.Host</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UserSecretsId>smtp-mockup-host</UserSecretsId>
+
+    <!-- El Host NO tiene archivos .razor (la UI vive en la RCL SmtpMockup.Web), pero sí sirve
+         los assets de Blazor: sin esta propiedad el SDK no agrega el paquete
+         Microsoft.AspNetCore.App.Internal.Assets, la publicación se queda sin
+         wwwroot/_framework/blazor.web.js y el circuito de Interactive Server nunca arranca
+         (la página se ve, pero no actualiza y todos los botones están muertos).
+         El valor debe fijarse a "true" y no dejarse vacío porque el SDK sólo lo deduce cuando
+         encuentra contenido .razor en el propio proyecto. -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      Perfil de publicación por defecto (RF-10, D-13): self-contained y single-file para win-x64.
+      Un ejecutable único es lo que permite que install-service.ps1 tenga un solo archivo que
+      instalar y que "copiar el .exe" sea toda la instalación.
+
+      NO se activa el trimming: MailKit/MimeKit y el binder de configuración de Options usan
+      reflexión, y un publish recortado rompe en runtime, no en compilación (DESIGN §9).
+
+      IncludeNativeLibrariesForSelfExtract + EnableCompressionInSingleFile son deliberados: sin
+      ellos, Windows bloquea el .exe mientras se extrae la caché nativa. IncludeAllContentForSelfExtract
+      se deja OFF a propósito: extrae los assets estáticos de Blazor (wwwroot) a %TEMP% en cada
+      arranque, y como servicio eso es escribir en disco en cada start. El contenido (appsettings.json,
+      wwwroot, certs/, logs/, data/) se distribuye como archivos junto al .exe y todas las rutas
+      relativas cuelgan de AppContext.BaseDirectory: ver docs/hosting-modes.md.
+    -->
+    <PublishSingleFile Condition="'$(RuntimeIdentifier)' == 'win-x64'">true</PublishSingleFile>
+    <SelfContained Condition="'$(RuntimeIdentifier)' == 'win-x64'">true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <DebugType>embedded</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+</Project>

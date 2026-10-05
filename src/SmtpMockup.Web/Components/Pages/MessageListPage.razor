@@ -1,0 +1,467 @@
+@page "/"
+@inject MessageListService ListService
+@inject IMessageStore Store
+@inject IMessageChangeNotifier Notifier
+@inject ISnackbar Snackbar
+
+<PageHeader Text="Mensajes" />
+
+<div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
+    <div>
+        <MudText Typo="Typo.h5">Mensajes recibidos</MudText>
+        <MudText Typo="Typo.body2" data-testid="result-summary">@ResultSummary</MudText>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RefreshAsync"
+                   data-testid="refresh">Actualizar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   Disabled="@(_selection.Count == 0)" OnClick="AskDeleteSelectedAsync"
+                   data-testid="delete-selected">
+            Borrar seleccionados (@_selection.Count)
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever"
+                   Disabled="@(_result.TotalCount == 0)" OnClick="AskDeleteAllAsync" data-testid="delete-all">
+            Borrar todos
+        </MudButton>
+    </div>
+</div>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-3" data-testid="list-error">@_error</MudAlert>
+}
+
+@if (_result.HasValidationError)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-3" data-testid="filter-validation">
+        @_result.ValidationError
+    </MudAlert>
+}
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudTextField T="string" Label="Buscar" Placeholder="asunto, remitente o destinatario"
+                          Value="@_filter.Search" ValueChanged="OnSearchChanged"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          data-testid="filter-search" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField T="string" Label="Remitente" Value="@_filter.From"
+                          ValueChanged="OnFromChanged" data-testid="filter-from" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField T="string" Label="Destinatario" Value="@_filter.To"
+                          ValueChanged="OnToChanged" data-testid="filter-to" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudTextField T="string" Label="Asunto" Value="@_filter.Subject"
+                          ValueChanged="OnSubjectChanged" data-testid="filter-subject" Clearable="true" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudSelect T="bool?" Label="Adjuntos" Value="@_filter.HasAttachments"
+                       ValueChanged="OnHasAttachmentsChanged" Clearable="true" data-testid="filter-attachments">
+                <MudSelectItem T="bool?" Value="@((bool?)true)">Con adjuntos</MudSelectItem>
+                <MudSelectItem T="bool?" Value="@((bool?)false)">Sin adjuntos</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudDatePicker Label="Desde" Date="@_filter.ReceivedAfter"
+                           DateChanged="OnReceivedAfterChanged" Clearable="true"
+                           data-testid="filter-after" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudDatePicker Label="Hasta" Date="@_filter.ReceivedBefore"
+                           DateChanged="OnReceivedBeforeChanged" Clearable="true"
+                           data-testid="filter-before" />
+        </MudItem>
+        <MudItem xs="12" md="2">
+            <MudSelect T="int" Label="Filas por página" Value="@_pageSize" ValueChanged="OnPageSizeChanged"
+                       data-testid="page-size">
+                @foreach (var size in PageSizes)
+                {
+                    <MudSelectItem T="int" Value="@size">@size</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="2" Class="d-flex align-center justify-end">
+            @if (_filter.HasAnyFilter)
+            {
+                <MudButton Variant="Variant.Text" OnClick="ClearFiltersAsync" data-testid="clear-filters">
+                    Limpiar filtros
+                </MudButton>
+            }
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_result.Items.Count == 0)
+{
+    // El puerto sale de la configuración y no de un literal: con --Smtp:Plain:Port=9025 el
+    // mensaje seguía diciendo 8025, que es justo el puerto por el que no se puede enviar nada.
+    var emptyMessage = _filter.HasAnyFilter
+        ? "Ningún mensaje cumple el filtro."
+        : $"Todavía no llegó ningún correo. Envía uno al puerto {PlainPort} y aparecerá aquí solo.";
+<MudAlert Severity="Severity.Info" data-testid="empty-list">@emptyMessage</MudAlert>
+}
+else
+{
+    <MudTable Items="_result.Items" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm"
+              Elevation="1" data-testid="message-table">
+        <HeaderContent>
+            <MudTh>
+                <MudCheckBox T="bool" Value="@AllOnPageSelected" ValueChanged="ToggleAllOnPage"
+                             data-testid="select-all" />
+            </MudTh>
+            <MudTh>Recibido</MudTh>
+            <MudTh>Remitente</MudTh>
+            <MudTh>Destinatario</MudTh>
+            <MudTh>Asunto</MudTh>
+            <MudTh Style="text-align:right">Tamaño</MudTh>
+            <MudTh>Transporte</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudCheckBox T="bool" Value="@_selection.Contains(context.Id)"
+                              ValueChanged="@(selected => Toggle(context.Id, selected))"
+                              data-testid="@($"select-{context.Id}")" />
+            </MudTd>
+            <MudTd DataLabel="Recibido">@FormatTimestamp(context.ReceivedAtUtc)</MudTd>
+            <MudTd DataLabel="Remitente">@(context.From ?? "-")</MudTd>
+            <MudTd DataLabel="Destinatario">@(context.FirstRecipient ?? "-")</MudTd>
+            <MudTd DataLabel="Asunto">
+                <MudLink Href="@($"messages/{context.Id}")" data-testid="@($"open-{context.Id}")">
+                    @SubjectDecoder.ForDisplay(context.Subject)
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Tamaño" Style="text-align:right">@AttachmentTable.FormatSize(context.SizeBytes)</MudTd>
+            <MudTd DataLabel="Transporte">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Transport</MudChip>
+                @if (context.HasAttachments)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.AttachFile" Size="Size.Small" Class="ml-1"
+                              title="@($"{context.AttachmentCount} adjunto(s)")" />
+                }
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                               aria-label="Borrar" OnClick="@(() => AskDeleteSingleAsync(context))"
+                               data-testid="@($"delete-{context.Id}")" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <div class="d-flex align-center justify-space-between mt-3 flex-wrap gap-2">
+        <MudText Typo="Typo.body2" data-testid="page-info">@PageInfo</MudText>
+        <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="@(!_result.HasPreviousPage)"
+                           OnClick="@(() => GoToPageAsync(_result.Page - 1))" data-testid="previous-page" />
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="@(!_result.HasNextPage)"
+                           OnClick="@(() => GoToPageAsync(_result.Page + 1))" data-testid="next-page" />
+        </MudButtonGroup>
+    </div>
+}
+
+<ConfirmDialog Visible="@(_pendingDelete is not null)"
+              Title="@(_pendingDelete?.Title ?? "Confirmar")"
+              Message="@(_pendingDelete?.Message ?? string.Empty)"
+              ConfirmText="Borrar"
+              ConfirmColor="Color.Error"
+              OnConfirm="ExecuteDeleteAsync"
+              OnCancel="CancelDelete" />
+
+@code {
+    private MessageFilterModel _filter = new();
+    private MessageListResult _result = MessageListResult.Empty;
+    private HashSet<string> _selection = new(StringComparer.Ordinal);
+    private int _pageSize;
+    private int _page = 1;
+    private string? _error;
+    private PendingDelete? _pendingDelete;
+    private bool _disposed;
+
+    [Inject]
+    private IOptions<WebOptions> WebOptions { get; set; } = default!;
+
+    [Inject]
+    private IOptions<SmtpMockupOptions> Options { get; set; } = default!;
+
+    /// <summary>El puerto del listener en claro, para el texto de estado vacío.</summary>
+    private int PlainPort => Options.Value.Smtp.Plain.Port;
+
+    /// <summary>Texto del contador de resultados.</summary>
+    private string ResultSummary => _result.TotalCount == 0
+        ? "No hay mensajes"
+        : $"{_result.TotalCount} mensaje(s) — mostrando {_result.FirstRowNumber}-{_result.LastRowNumber} de {_result.TotalCount}";
+
+    /// <summary>Texto de la paginación.</summary>
+    private string PageInfo => _result.PageCount == 0
+        ? "Sin resultados"
+        : $"Página {_result.Page} de {_result.PageCount}";
+
+    /// <summary>
+    /// Tamaños de página ofrecidos. Incluye siempre el valor actual: si viene de la
+    /// configuración y no está en la lista, el selector debe poder mostrarlo.
+    /// </summary>
+    private IEnumerable<int> PageSizes
+        => new[] { 10, 25, 50, 100, _pageSize }
+            .Where(size => size > 0 && size <= _pageSize)
+            .Distinct()
+            .OrderBy(size => size);
+
+    /// <summary>Si todas las filas de la página actual están seleccionadas.</summary>
+    private bool AllOnPageSelected
+        => _result.Items.Count > 0 && _result.Items.All(item => _selection.Contains(item.Id));
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        _pageSize = WebOptions.Value.DefaultPageSize;
+        Notifier.Changed += OnMessagesChanged;
+        await ReloadAsync();
+    }
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        // Sin esto, el notificador (singleton) apuntaría a un circuito ya cerrado: los handlers
+        // se acumulan en cada recarga de la página hasta agotar la memoria del proceso.
+        Notifier.Changed -= OnMessagesChanged;
+        _disposed = true;
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Llega un cambio del store o del vigilante del directorio. El aviso viene en un hilo ajeno
+    /// al circuito (el del listener SMTP), así que el re-render hay que pedirlo con InvokeAsync.
+    /// </summary>
+    private void OnMessagesChanged(object? sender, MessageChangeNotification notification)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        // InvokeAsync NO re-renderiza por sí solo (sólo encola la trabajo en el dispatcher):
+        // sin el StateHasChanged explícito el listado se queda con lo que ya estaba escrito.
+        _ = InvokeAsync(async () =>
+        {
+            await ReloadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            _error = null;
+            _result = await ListService.GetPageAsync(_filter.ToQuery(_page, _pageSize));
+            _page = _result.Page;
+
+            // Tras un borrado o un filtro nuevo, ids que ya no están en la página dejarían
+            // "borrar seleccionados" apuntando a mensajes inexistentes.
+            PruneSelection();
+        }
+        catch (MessageStoreException exception)
+        {
+            _error = $"No se pudo leer el almacenamiento: {exception.Message}";
+        }
+    }
+
+    private void PruneSelection()
+    {
+        _selection.RemoveWhere(id => _result.Items.All(item => item.Id != id));
+    }
+
+    private Task RefreshAsync() => ReloadAsync();
+
+    private Task GoToPageAsync(int page)
+    {
+        _page = page;
+        _selection.Clear();
+        return ReloadAsync();
+    }
+
+    private Task OnPageSizeChanged(int size)
+    {
+        _pageSize = size;
+        _page = 1;
+        return ReloadAsync();
+    }
+
+    private Task ApplyFilterAsync()
+    {
+        _page = 1;
+        _selection.Clear();
+        return ReloadAsync();
+    }
+
+    private Task OnSearchChanged(string? value)
+    {
+        _filter.Search = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnFromChanged(string? value)
+    {
+        _filter.From = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnToChanged(string? value)
+    {
+        _filter.To = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnSubjectChanged(string? value)
+    {
+        _filter.Subject = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnHasAttachmentsChanged(bool? value)
+    {
+        _filter.HasAttachments = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnReceivedAfterChanged(DateTime? value)
+    {
+        _filter.ReceivedAfter = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task OnReceivedBeforeChanged(DateTime? value)
+    {
+        _filter.ReceivedBefore = value;
+        return ApplyFilterAsync();
+    }
+
+    private Task ClearFiltersAsync()
+    {
+        _filter.Clear();
+        return ApplyFilterAsync();
+    }
+    private void Toggle(string id, bool selected)
+    {
+        if (selected)
+        {
+            _selection.Add(id);
+        }
+        else
+        {
+            _selection.Remove(id);
+        }
+    }
+
+    private void ToggleAllOnPage(bool selected)
+    {
+        if (selected)
+        {
+            foreach (var item in _result.Items)
+            {
+                _selection.Add(item.Id);
+            }
+        }
+        else
+        {
+            _selection.RemoveWhere(id => _result.Items.Any(item => item.Id == id));
+        }
+    }
+
+    private Task AskDeleteSingleAsync(MessageSummary summary) => ShowDeleteAsync(new PendingDelete(
+        PendingDeleteKind.Single,
+        [summary.Id],
+        "Borrar mensaje",
+        $"Se borrará \"{SubjectDecoder.ForDisplay(summary.Subject)}\". No se puede deshacer."));
+
+    private Task AskDeleteSelectedAsync() => ShowDeleteAsync(new PendingDelete(
+        PendingDeleteKind.Selected,
+        [.. _selection],
+        "Borrar seleccionados",
+        $"Se borrarán {_selection.Count} mensaje(s). No se puede deshacer."));
+
+    private Task AskDeleteAllAsync() => ShowDeleteAsync(new PendingDelete(
+        PendingDeleteKind.All,
+        [],
+        "Borrar todos los mensajes",
+        $"Se borrarán los {_result.TotalCount} mensaje(s) del filtro actual. No se puede deshacer."));
+
+    private Task ShowDeleteAsync(PendingDelete pendingDelete)
+    {
+        _pendingDelete = pendingDelete;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelDelete()
+    {
+        _pendingDelete = null;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Ejecuta el borrado confirmado. "Borrar todos" aplica el <em>filtro activo</em>, no la
+    /// página: es lo que espera quien pulsa "borrar todos" tras filtrar por un remitente.
+    /// </summary>
+    private async Task ExecuteDeleteAsync()
+    {
+        var pending = _pendingDelete;
+        _pendingDelete = null;
+
+        if (pending is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _error = null;
+            int deleted;
+
+            if (pending.Kind == PendingDeleteKind.All)
+            {
+                deleted = await Store.DeleteManyAsync(_filter.ToQuery(1, _pageSize));
+            }
+            else
+            {
+                deleted = 0;
+                foreach (var id in pending.Ids)
+                {
+                    if (await Store.DeleteAsync(id))
+                    {
+                        deleted++;
+                    }
+                }
+            }
+
+            _selection.Clear();
+            Snackbar.Add($"{deleted} mensaje(s) borrado(s)", Severity.Success);
+            await ReloadAsync();
+        }
+        catch (MessageStoreException exception)
+        {
+            _error = $"No se pudo borrar: {exception.Message}";
+        }
+    }
+
+    /// <summary>Fecha en hora local; el detalle muestra la exacta con milisegundos.</summary>
+    internal static string FormatTimestamp(DateTimeOffset value)
+        => value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+
+    /// <summary>Qué se pidió borrar al confirmar.</summary>
+    private sealed record PendingDelete(
+        PendingDeleteKind Kind,
+        IReadOnlyList<string> Ids,
+        string Title,
+        string Message);
+
+    private enum PendingDeleteKind
+    {
+        Single,
+        Selected,
+        All,
+    }
+}

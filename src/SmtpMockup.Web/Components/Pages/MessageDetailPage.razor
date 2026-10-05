@@ -1,0 +1,295 @@
+@page "/messages/{Id}"
+@using Microsoft.AspNetCore.WebUtilities
+@inject IMessageStore Store
+@inject NavigationManager Navigation
+
+<PageHeader Text="@(_message is null ? "Mensaje" : SubjectDecoder.ForDisplay(_message.Subject))" />
+
+@if (_notFound)
+{
+    <MudAlert Severity="Severity.Warning" Class="mt-4" data-testid="message-not-found">
+        No existe ningún mensaje con el id <code>@Id</code>.
+        <MudLink Href="/">Volver al listado</MudLink>
+    </MudAlert>
+}
+else if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mt-4" data-testid="detail-error">@_error</MudAlert>
+}
+else if (_message is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" />
+}
+else
+{
+    <div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
+        <div class="d-flex align-center gap-2">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/"))"
+                           aria-label="Volver" data-testid="back" />
+            <div>
+                <MudText Typo="Typo.h5" data-testid="detail-subject">
+                    @SubjectDecoder.ForDisplay(_message.Subject)
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    Recibido @_message.ReceivedAtUtc.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") UTC ·
+                    id <code data-testid="detail-id">@_message.Id</code>
+                </MudText>
+            </div>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete"
+                   OnClick="AskDeleteAsync" data-testid="detail-delete">Borrar</MudButton>
+    </div>
+
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-4"
+             @bind-ActivePanelIndex="_activePanel" data-testid="detail-tabs">
+        <MudTabPanel Text="Resumen" Icon="@Icons.Material.Filled.Subject">
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" data-testid="envelope">
+                <tbody>
+                    <tr><td><strong>De</strong></td><td>@FormatAddresses(_message.From)</td></tr>
+                    <tr><td><strong>Para</strong></td><td>@FormatAddresses(_message.To)</td></tr>
+                    @if (_message.Cc.Count > 0)
+                    {
+                        <tr><td><strong>Cc</strong></td><td>@FormatAddresses(_message.Cc)</td></tr>
+                    }
+                    @if (_message.Bcc.Count > 0)
+                    {
+                        <tr><td><strong>Bcc (del sobre)</strong></td><td>@FormatAddresses(_message.Bcc)</td></tr>
+                    }
+                    @if (_message.ReplyTo.Count > 0)
+                    {
+                        <tr><td><strong>Responder a</strong></td><td>@FormatAddresses(_message.ReplyTo)</td></tr>
+                    }
+                    <tr><td><strong>Asunto (crudo)</strong></td><td><code>@_message.Subject</code></td></tr>
+                    <tr><td><strong>Message-ID</strong></td><td><code>@_message.MessageId</code></td></tr>
+                    <tr>
+                        <td><strong>Fecha del cliente</strong></td>
+                        <td>@(_message.SentDate?.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "(sin cabecera Date)")</td>
+                    </tr>
+                    <tr><td><strong>Sobre: MAIL FROM</strong></td><td>@(_message.Envelope.MailFrom ?? "(null)")</td></tr>
+                    <tr>
+                        <td><strong>Sobre: RCPT TO</strong></td>
+                        <td>@string.Join(", ", _message.Envelope.RecipientTo)</td>
+                    </tr>
+                    <tr><td><strong>HELO</strong></td><td>@(_message.Envelope.Helo ?? "-")</td></tr>
+                    <tr>
+                        <td><strong>Origen</strong></td>
+                        <td>@_message.Envelope.RemoteIp:@_message.Envelope.RemotePort</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transporte</strong></td>
+                        <td>
+                            @_message.Envelope.Transport
+                            @if (_message.Envelope.TlsNegotiated)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">TLS</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">sin TLS</MudChip>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tamaño</strong></td>
+                        <td>@_message.Size.TotalBytes bytes (cuerpo: @_message.Size.BodyBytes)</td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+        <MudTabPanel Text="@($"Texto ({TextLength(_message):N0} car.)")" Icon="@Icons.Material.Filled.TextSnippet">
+            @if (_message.Body.HasText)
+            {
+                <pre class="body-text" data-testid="body-text">@_message.Body.Text</pre>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" data-testid="no-text-body">
+                    Este mensaje no trae cuerpo de texto plano.
+                </MudAlert>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="HTML" Icon="@Icons.Material.Filled.Code">
+            <HtmlPreview Html="@_message.Body.Html" />
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Headers ({_message.Headers.Count})")" Icon="@Icons.Material.Filled.ListAlt">
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" data-testid="headers">
+                <tbody>
+                    @foreach (var header in _message.Headers)
+                    {
+                        <tr>
+                            <td style="white-space:nowrap"><strong>@header.Name</strong></td>
+                            <td style="word-break:break-all"><code>@header.Value</code></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"JSON ({JsonByteLength(_rawJson):N0} bytes)")" Icon="@Icons.Material.Filled.DataObject">
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                Es el documento tal como está almacenado en disco. Se muestra sin interpretarlo.
+            </MudAlert>
+            <pre class="body-text" data-testid="raw-json">@_rawJson</pre>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Adjuntos ({_message.Attachments.Count})")" Icon="@Icons.Material.Filled.AttachFile">
+            <AttachmentTable Attachments="@_message.Attachments" MessageId="@_message.Id" />
+            @if (_rawMimeUrl is not null)
+            {
+                <MudButton Class="mt-3" Variant="Variant.Outlined" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Download" Href="@_rawMimeUrl"
+                           data-testid="download-raw">
+                    Descargar MIME original (.eml)
+                </MudButton>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+<ConfirmDialog Visible="@_confirmDelete"
+              Title="Borrar mensaje"
+              Message="Se borrará el mensaje de forma permanente. No se puede deshacer."
+              ConfirmText="Borrar"
+              ConfirmColor="Color.Error"
+              OnConfirm="DeleteAsync"
+              OnCancel="@(() => _confirmDelete = false)" />
+
+<style>
+    .body-text {
+        max-height: 65vh;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: var(--mud-palette-surface);
+        padding: 1rem;
+        border-radius: 4px;
+        font-family: var(--mud-typography-caption-family, monospace);
+    }
+</style>
+
+@code {
+    /// <summary>Id del mensaje en la ruta.</summary>
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    private ReceivedMessage? _message;
+    private string _rawJson = string.Empty;
+    private int _activePanel;
+    private bool _notFound;
+    private bool _confirmDelete;
+    private string? _error;
+    private string? _rawMimeUrl;
+
+    [Inject]
+    private IOptions<WebOptions> WebOptions { get; set; } = default!;
+
+    [Inject]
+    private IOptions<StorageOptions> StorageOptions { get; set; } = default!;
+
+    /// <inheritdoc />
+    protected override async Task OnParametersSetAsync()
+    {
+        _activePanel = TabIndex(TabFromQuery());
+        await LoadAsync();
+    }
+
+    /// <summary>
+    /// Pestaña pedida en la URL (<c>/messages/ID?tab=HTML</c>), para poder enlazar o recargar
+    /// directamente la vista interesante. Se lee de la query en vez de declarar un
+    /// <c>[SupplyParameterFromQuery]</c> porque así el componente funciona igual Renderizado en un
+    /// test (bUnit no ejecuta el binder de query) y dentro de la aplicación.
+    /// </summary>
+    private string? TabFromQuery()
+    {
+        var query = QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+
+        return query.TryGetValue("tab", out var value) ? value.ToString() : null;
+    }
+
+    /// <summary>Índice de la pestaña pedida por nombre; 0 (Resumen) si no la hay.</summary>
+    internal static int TabIndex(string? tab)
+        => tab?.ToUpperInvariant() switch
+        {
+            "TEXTO" => 1,
+            "HTML" => 2,
+            "HEADERS" => 3,
+            "JSON" => 4,
+            "ADJUNTOS" => 5,
+            _ => 0,
+        };
+
+    private async Task LoadAsync()
+    {
+        if (!MessageId.IsValid(Id))
+        {
+            // Una ruta con un id inválido es una URL manipulada, no un fallo del servidor: se
+            // muestra el estado vacío y nunca se intenta leer un archivo (SPEC §10.3).
+            _notFound = true;
+            _message = null;
+            return;
+        }
+
+        try
+        {
+            _message = await Store.GetAsync(Id);
+            _notFound = _message is null;
+
+            if (_message is not null)
+            {
+                // El JSON crudo se muestra con las mismas opciones con las que el store lo
+                // escribió, para que lo que se ve sea lo que hay en el archivo.
+                _rawJson = StoredJson.Format(_message, StorageOptions.Value.WriteIndented);
+                _rawMimeUrl = AttachmentDownloader.TryCreateRawMime(_message, WebOptions.Value.ShowRawMimeDownload)
+                    is null
+                    ? null
+                    : $"/download/message/{Uri.EscapeDataString(_message.Id)}/raw";
+            }
+        }
+        catch (MessageStoreException exception)
+        {
+            _error = $"No se pudo leer el mensaje: {exception.Message}";
+        }
+        catch (ArgumentException)
+        {
+            _notFound = true;
+        }
+    }
+
+    private Task AskDeleteAsync()
+    {
+        _confirmDelete = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task DeleteAsync()
+    {
+        _confirmDelete = false;
+
+        try
+        {
+            await Store.DeleteAsync(Id);
+        }
+        catch (MessageStoreException)
+        {
+            // Si el borrado falla, el listado se recarga al volver y ahí se ve el estado real
+            // del almacenamiento; no vale la pena quedarse en una página muerta.
+        }
+
+        Navigation.NavigateTo("/");
+    }
+
+    /// <summary>Direcciones en texto legible, con el nombre entre comillas si lo hay.</summary>
+    internal static string FormatAddresses(IReadOnlyList<MailAddressInfo> addresses)
+        => addresses.Count == 0
+            ? "-"
+            : string.Join(", ", addresses.Select(address =>
+                address.Name is null ? address.Address : $"\"{address.Name}\" <{address.Address}>"));
+
+    /// <summary>Caráctes del cuerpo de texto, para la etiqueta de la pestaña.</summary>
+    internal static int TextLength(ReceivedMessage message) => message.Body.Text?.Length ?? 0;
+
+    /// <summary>Bytes del JSON crudo, para la etiqueta de la pestaña.</summary>
+    internal static int JsonByteLength(string json) => System.Text.Encoding.UTF8.GetByteCount(json);
+}

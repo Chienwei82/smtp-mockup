@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SmtpMockup.Web</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <!-- La librería aporta componentes y assets estáticos; el Host aporta el composition root,
+         Kestrel y el ciclo de vida. Por eso esto es una RCL y no un proyecto Sdk.Web (D-06). -->
+    <StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmtpMockup.Core\SmtpMockup.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- RefreshAsync y los helpers de formato son internal para que las pruebas de la UI puedan
+         ejercitarlos sin hacerlos públicos sólo para eso. -->
+    <InternalsVisibleTo Include="SmtpMockup.Web.Tests" />
+  </ItemGroup>
+
+</Project>

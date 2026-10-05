@@ -1,0 +1,60 @@
+@inject IOptions<WebOptions> WebOptions
+
+@* El HTML de un correo NUNCA se inyecta en el DOM de la aplicación: vive en un iframe con
+   sandbox, que no puede ejecutar scripts, ni navegar, ni acceder al origen de la UI
+   (SPEC §9.4). Por encima de Web:MaxHtmlPreviewBytes el iframe se reemplaza por el texto
+   escapado, porque un srcdoc de 20 MB por el circuito dejaría la pestaña sin responder. *@
+
+@if (string.IsNullOrEmpty(Html))
+{
+    <MudAlert Severity="Severity.Info" Dense="true">Este mensaje no trae cuerpo HTML.</MudAlert>
+}
+else if (_preview.TooLarge)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2"
+              data-testid="html-too-large">
+        El cuerpo HTML ocupa @_preview.ByteCount bytes y supera el límite de
+        @WebOptions.Value.MaxHtmlPreviewBytes; se muestra como texto.
+    </MudAlert>
+    <pre class="html-plain" data-testid="html-plain">@Html</pre>
+}
+else
+{
+    <iframe class="html-frame"
+            title="Cuerpo HTML del mensaje"
+            sandbox=""
+            referrerpolicy="no-referrer"
+            srcdoc="@Html"
+            data-testid="html-frame"></iframe>
+}
+
+<style>
+    .html-frame {
+        width: 100%;
+        min-height: 70vh;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: #fff;
+    }
+
+    .html-plain {
+        max-height: 70vh;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: var(--mud-palette-surface);
+        padding: 1rem;
+        border-radius: 4px;
+    }
+</style>
+
+@code {
+    /// <summary>Cuerpo HTML del mensaje, tal como llegó.</summary>
+    [Parameter]
+    public string? Html { get; set; }
+
+    private HtmlPreviewResult _preview = HtmlPreviewResult.Empty;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+        => _preview = HtmlPreviewBuilder.Build(Html, WebOptions.Value.MaxHtmlPreviewBytes);
+}

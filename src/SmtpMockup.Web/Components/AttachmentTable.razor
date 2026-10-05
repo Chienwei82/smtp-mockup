@@ -1,0 +1,116 @@
+@* Adjuntos y descargas. El nombre del archivo se sanea en AttachmentDownloader, nunca aquí:
+   un adjunto con "../../evil.exe" no debe poder cambiar el nombre de la descarga. *@
+
+@if (Attachments.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" data-testid="no-attachments">
+        Este mensaje no tiene adjuntos.
+    </MudAlert>
+}
+else
+{
+    <MudTable Items="Rows" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0"
+              data-testid="attachment-table">
+        <HeaderContent>
+            <MudTh>Archivo</MudTh>
+            <MudTh>Tipo</MudTh>
+            <MudTh Style="text-align:right">Tamaño</MudTh>
+            <MudTh>SHA-256</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd DataLabel="Archivo">
+                @row.DisplayName
+                @if (row.Attachment.IsInline)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">inline</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Tipo">@row.Attachment.ContentType</MudTd>
+            <MudTd DataLabel="Tamaño" Style="text-align:right">@FormatSize(row.Attachment.SizeBytes)</MudTd>
+            <MudTd DataLabel="SHA-256">
+                <MudTooltip Text="@row.Attachment.ChecksumSha256">
+                    <MudText Typo="Typo.body2" Class="checksum">@ShortHash(row.Attachment.ChecksumSha256)</MudText>
+                </MudTooltip>
+            </MudTd>
+            <MudTd>
+                @if (row.NotStored)
+                {
+                    <MudTooltip Text="El adjunto supera Storage:MaxInlineAttachmentBytes y no se guardó su contenido">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">no guardado</MudChip>
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                               Href="@row.DownloadUrl" data-testid="download-attachment">
+                        Descargar
+                    </MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+<style>
+    .checksum {
+        font-family: var(--mud-typography-caption-family, monospace);
+        font-size: 0.75rem;
+    }
+</style>
+
+@code {
+    /// <summary>Adjuntos del mensaje.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IReadOnlyList<AttachmentInfo> Attachments { get; set; } = [];
+
+    /// <summary>Id del mensaje, para armar la URL de descarga.</summary>
+    [Parameter]
+    [EditorRequired]
+    public string MessageId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Filas del tabla. El índice se calcula aquí y no en la plantilla porque la URL de
+    /// descarga lo necesita, y Blazor no expone el índice dentro de <c>RowTemplate</c>.
+    /// </summary>
+    private IReadOnlyList<AttachmentRow> Rows => Attachments
+        .Select((attachment, index) => new AttachmentRow(
+            attachment,
+            AttachmentDownloader.SanitizeFileName(attachment.FileName),
+            NotStored: attachment.Omitted || attachment.ContentBase64 is null,
+            DownloadUrl: $"/download/message/{Uri.EscapeDataString(MessageId)}/attachment/{index}"))
+        .ToList();
+
+    /// <summary>
+    /// Formato legible para los tamaños. Se escribe con if/else y no con un <c>switch</c> de
+    /// patrones porque Razor interpreta el "&lt;" de un patrón relacional como el comienzo de
+    /// una etiqueta y rompe el bloque de código del componente.
+    /// </summary>
+    internal static string FormatSize(long bytes)
+    {
+        if (bytes < 1024)
+        {
+            return $"{bytes} B";
+        }
+
+        if (bytes < 1024L * 1024)
+        {
+            return $"{bytes / 1024d:0.#} KB";
+        }
+
+        return bytes < 1024L * 1024 * 1024
+            ? $"{bytes / (1024d * 1024):0.#} MB"
+            : $"{bytes / (1024d * 1024 * 1024):0.##} GB";
+    }
+
+    /// <summary>Prefijo del SHA-256 para que la columna siga siendo legible.</summary>
+    internal static string ShortHash(string? hash)
+        => hash is { Length: > 12 } ? hash[..12] : hash ?? string.Empty;
+
+    private sealed record AttachmentRow(
+        AttachmentInfo Attachment,
+        string DisplayName,
+        bool NotStored,
+        string DownloadUrl);
+}

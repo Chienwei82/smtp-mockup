@@ -21,7 +21,11 @@ certs/
 [Aa]rtifacts/
 publish/
 *.publishsettings
-*.pubxml
+
+# Los perfiles de publicación SÍ se versionan: son la definición del artefacto de servicio y sin
+# ellos el comando documentado ('dotnet publish -p:PublishProfile=win-x64') falla en un clon nuevo.
+# Sólo se ignoran los *.publishsettings, que pueden llevar credenciales.
+!*.pubxml
 *.trx
 *.coverage
 *.coveragexml

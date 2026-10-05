@@ -1,0 +1,133 @@
+@page "/stats"
+@implements IDisposable
+@inject IMessageStore Store
+@inject IMessageChangeNotifier Notifier
+
+<PageHeader Text="Estadísticas" />
+
+<MudText Typo="Typo.h5" Class="mb-4">Estadísticas</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Mensajes almacenados</MudText>
+            <MudText Typo="Typo.h4" data-testid="total-count">@_total</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Con adjuntos</MudText>
+            <MudText Typo="Typo.h4" data-testid="with-attachments">@_withAttachments</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Tamaño total</MudText>
+            <MudText Typo="Typo.h4" data-testid="total-bytes">@AttachmentTable.FormatSize(_totalBytes)</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">Por día</MudText>
+            @if (_byDay.Count == 0)
+            {
+                <MudText Typo="Typo.body2">Sin datos todavía.</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Elevation="0" data-testid="by-day">
+                    <tbody>
+                        @foreach (var entry in _byDay)
+                        {
+                            <tr><td>@entry.Key</td><td style="text-align:right">@entry.Value</td></tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">Por dominio destinatario</MudText>
+            @if (_byDomain.Count == 0)
+            {
+                <MudText Typo="Typo.body2">Sin datos todavía.</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Elevation="0" data-testid="by-domain">
+                    <tbody>
+                        @foreach (var entry in _byDomain)
+                        {
+                            <tr><td>@entry.Key</td><td style="text-align:right">@entry.Value</td></tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private int _total;
+    private int _withAttachments;
+    private long _totalBytes;
+    private IReadOnlyList<KeyValuePair<string, int>> _byDay = [];
+    private IReadOnlyList<KeyValuePair<string, int>> _byDomain = [];
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        Notifier.Changed += OnChanged;
+        await ReloadAsync();
+    }
+
+    /// <inheritdoc />
+    public void Dispose() => Notifier.Changed -= OnChanged;
+
+    private void OnChanged(object? sender, MessageChangeNotification notification)
+        // InvokeAsync sólo encola: sin StateHasChanged los contadores no se actualizan solos.
+        => _ = InvokeAsync(async () =>
+        {
+            await ReloadAsync();
+            StateHasChanged();
+        });
+
+    private async Task ReloadAsync()
+    {
+        // Sin filtros y con una página grande: aquí interesan todos los mensajes, no una página.
+        var query = new MailQuery { PageSize = MailQuery.HardMaxPageSize };
+        var summaries = await Store.QueryAsync(query);
+        _total = await Store.CountAsync(query);
+        _withAttachments = summaries.Count(summary => summary.HasAttachments);
+        _totalBytes = summaries.Sum(summary => summary.SizeBytes);
+
+        _byDay = [.. summaries
+            .GroupBy(summary => summary.ReceivedAtUtc.UtcDateTime.ToString("yyyy-MM-dd"))
+            .Select(group => new KeyValuePair<string, int>(group.Key, group.Count()))
+            .OrderByDescending(entry => entry.Key)];
+
+        _byDomain = [.. summaries
+            .Select(summary => DomainOf(summary.FirstRecipient))
+            .Where(domain => domain.Length > 0)
+            .GroupBy(domain => domain, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new KeyValuePair<string, int>(group.Key, group.Count()))
+            .OrderByDescending(entry => entry.Value)
+            .ThenBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>Parte posterior a la <c>@</c> de una dirección, o cadena vacía.</summary>
+    internal static string DomainOf(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return string.Empty;
+        }
+
+        var separator = address.LastIndexOf('@');
+        return separator >= 0 && separator < address.Length - 1 ? address[(separator + 1)..] : string.Empty;
+    }
+}

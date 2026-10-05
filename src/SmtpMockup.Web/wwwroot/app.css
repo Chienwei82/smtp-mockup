@@ -1,0 +1,28 @@
+/*
+  Estilos mínimos de la UI. El tema y los componentes vienen de MudBlazor
+  (_content/MudBlazor/MudBlazor.min.css); aquí sólo está lo que la app necesita
+  y MudBlazor no cubre. Si este archivo falta en la publicación, la UI funciona
+  pero sin los ajustes de scroll y de la tabla.
+*/
+
+html, body {
+    margin: 0;
+    font-family: var(--mud-typography-body1-family, system-ui, sans-serif);
+}
+
+/* Los correos largos (textos sin saltos, HTML) revientan cualquier tabla. */
+table {
+    table-layout: auto;
+    word-break: break-word;
+}
+
+/* La lista puede tener cientos de filas: el scroll va en la página, no en la tabla. */
+.mud-table-container {
+    overflow-x: auto;
+}
+
+/* El iframe del cuerpo HTML se estira al alto disponible de la pestaña. */
+iframe {
+    border: 0;
+    width: 100%;
+}

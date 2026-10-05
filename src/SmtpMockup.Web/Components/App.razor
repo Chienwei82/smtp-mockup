@@ -1,0 +1,45 @@
+@inject IOptions<WebOptions> WebOptions
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    @* Título desde la configuración: App.razor no hereda de MainLayout, así que el valor no
+       se puede compartir por ahí y se lee directamente de Web:Title. Los <PageTitle> de cada
+       página sobrescriben esto cuando se navega dentro de la app. *@
+    <title>@Title</title>
+    <!--
+      Los assets de MudBlazor se sirven desde _content/MudBlazor: los aporta el paquete como
+      static web assets, así que el Host tiene que haber copiado wwwroot al publicar.
+    -->
+    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+
+    <div id="blazor-error-ui">
+        Se perdió la conexión con el servidor. <a href="" class="reload">Recargar</a>.
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>
+
+@code {
+    /// <summary>
+    /// Título del documento. Sale de <c>Web:Title</c>; vacío ⇒ el nombre por defecto, para que
+    /// un valor en blanco no deje la pestaña del navegador sin título.
+    /// </summary>
+    private string Title => string.IsNullOrWhiteSpace(WebOptions.Value.Title)
+        ? "smtp-mockup"
+        : WebOptions.Value.Title;
+}

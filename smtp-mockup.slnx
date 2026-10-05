@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmtpMockup.Core/SmtpMockup.Core.csproj" />
+    <Project Path="src/SmtpMockup.Host/SmtpMockup.Host.csproj" />
+    <Project Path="src/SmtpMockup.Smtp/SmtpMockup.Smtp.csproj" />
+    <Project Path="src/SmtpMockup.Storage/SmtpMockup.Storage.csproj" />
+    <Project Path="src/SmtpMockup.Web/SmtpMockup.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmtpMockup.Core.Tests/SmtpMockup.Core.Tests.csproj" />
+    <Project Path="tests/SmtpMockup.Host.Tests/SmtpMockup.Host.Tests.csproj" />
+    <Project Path="tests/SmtpMockup.Smtp.Tests/SmtpMockup.Smtp.Tests.csproj" />
+    <Project Path="tests/SmtpMockup.Storage.Tests/SmtpMockup.Storage.Tests.csproj" />
+    <Project Path="tests/SmtpMockup.Web.Tests/SmtpMockup.Web.Tests.csproj" />
+  </Folder>
+</Solution>

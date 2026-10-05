@@ -1,0 +1,117 @@
+@page "/settings"
+@inject IOptions<SmtpMockupOptions> Options
+@inject IMessageStore Store
+
+<PageHeader Text="Estado" />
+
+<MudText Typo="Typo.h5" Class="mb-4">Estado del proceso</MudText>
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Tiempo activo</MudText>
+            <MudText Typo="Typo.h5" data-testid="uptime">@Uptime</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Mensajes almacenados</MudText>
+            <MudText Typo="Typo.h5" data-testid="stored-count">@_storedCount</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.body2">Directorio escribible</MudText>
+            <MudChip T="string" Color="@(_writable ? Color.Success : Color.Error)" data-testid="writable">
+                @(_writable ? "sí" : "no")
+            </MudChip>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudText Typo="Typo.h6" Class="mb-3">Configuración efectiva</MudText>
+    <MudSimpleTable Dense="true" Elevation="0" data-testid="effective-config">
+        <tbody>
+            <tr><td>SMTP plano</td><td>@Endpoint(_config.Smtp.Plain)</td></tr>
+            <tr><td>SMTP STARTTLS</td><td>@Endpoint(_config.Smtp.StartTls)</td></tr>
+            <tr><td>Tamaño máximo de mensaje</td><td>@_config.Smtp.MaxMessageSizeMb MB</td></tr>
+            <tr><td>Certificado</td><td>@_config.Certificate.Mode — <code>@_config.Certificate.Path</code></td></tr>
+            <tr><td>Directorio de mensajes</td><td><code>@StorageDirectory</code></td></tr>
+            <tr><td>MIME crudo</td><td>@(_config.Storage.KeepRawMime ? "conservado" : "descartado")</td></tr>
+            <tr><td>UI</td><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
+            <tr><td>Vigilancia del directorio</td><td>@(_config.Web.WatchDirectory ? "activa" : "desactivada")</td></tr>
+            <tr><td>Actualización en vivo</td><td>debounce de @_config.Web.LiveUpdateDebounceMilliseconds ms</td></tr>
+            <tr><td>Paginación</td><td>@_config.Web.DefaultPageSize por defecto, tope @_config.Web.MaxPageSize</td></tr>
+            <tr><td>Límite de HTML</td><td>@_config.Web.MaxHtmlPreviewBytes bytes</td></tr>
+            <tr><td>Registro</td><td>@_config.Hosting.Mode — @_config.Hosting.LogDirectory</td></tr>
+        </tbody>
+    </MudSimpleTable>
+</MudPaper>
+
+@code {
+    private readonly DateTimeOffset _startedAt = DateTimeOffset.UtcNow;
+    private SmtpMockupOptions _config = new();
+    private int _storedCount;
+    private bool _writable;
+    private string StorageDirectory { get; set; } = "(sin directorio)";
+
+    /// <summary>Texto del tiempo activo.</summary>
+    private string Uptime => FormatUptime(DateTimeOffset.UtcNow - _startedAt);
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        _config = Options.Value;
+        _storedCount = await Store.CountAsync();
+        StorageDirectory = HostPath.Resolve(_config.Storage.Directory);
+        _writable = CheckWritable(StorageDirectory);
+    }
+
+    /// <summary>Texto de un <see cref="TimeSpan"/> sin dependencias de localización.</summary>
+    internal static string FormatUptime(TimeSpan uptime)
+        => uptime.TotalDays >= 1
+            ? $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m"
+            : uptime.TotalHours >= 1
+                ? $"{(int)uptime.TotalHours}h {uptime.Minutes}m"
+                : $"{Math.Max(uptime.Minutes, 0)}m {uptime.Seconds}s";
+
+    /// <summary>Describe un endpoint SMTP según esté habilitado o no.</summary>
+    private static string Endpoint(SmtpEndpointOptions options)
+        => options.Enabled
+            ? $"{EndpointAddress.FormatHostPort(options.BindAddress, options.Port)} ({options.Security})"
+            : "deshabilitado";
+
+    /// <summary>
+    /// Comprueba que el directorio acepte escrituras. Se hace de verdad, con un archivo temporal
+    /// que se borra: comprobar los permisos declarados no dice nada si el proceso corre como
+    /// una cuenta con menos privilegios de los que dice el ACL.
+    /// </summary>
+    internal static bool CheckWritable(string directory)
+    {
+        var probe = Path.Combine(directory, $".smtp-mockup-write-probe-{Environment.ProcessId}");
+        try
+        {
+            File.WriteAllText(probe, "probe");
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(probe))
+                {
+                    File.Delete(probe);
+                }
+            }
+            catch (IOException)
+            {
+                // Nada que hacer: es un archivo temporal en el directorio de datos.
+            }
+        }
+    }
+}

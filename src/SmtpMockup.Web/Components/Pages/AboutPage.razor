@@ -1,0 +1,48 @@
+@page "/about"
+@inject IOptions<SmtpMockupOptions> Options
+
+<PageHeader Text="Acerca de" />
+
+<MudText Typo="Typo.h5" Class="mb-4">Acerca de smtp-mockup</MudText>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudSimpleTable Dense="true" Elevation="0" data-testid="about">
+        <tbody>
+            <tr><td><strong>Versión</strong></td><td>@Version</td></tr>
+            <tr><td><strong>Función</strong></td><td>Servidor SMTP local que guarda todo lo que recibe y lo muestra en esta UI</td></tr>
+            <tr>
+                <td><strong>SMTP en claro</strong></td>
+                <td>@(_config.Smtp.Plain.Enabled ? EndpointAddress.FormatHostPort(_config.Smtp.Plain.BindAddress, _config.Smtp.Plain.Port) : "deshabilitado")</td>
+            </tr>
+            <tr>
+                <td><strong>SMTP STARTTLS</strong></td>
+                <td>@(_config.Smtp.StartTls.Enabled ? $"{EndpointAddress.FormatHostPort(_config.Smtp.StartTls.BindAddress, _config.Smtp.StartTls.Port)} ({_config.Smtp.StartTls.Security})" : "deshabilitado")</td>
+            </tr>
+            <tr><td><strong>UI</strong></td><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
+            <tr><td><strong>Autenticación</strong></td><td>ninguna, ni en SMTP ni en la UI: es una herramienta local</td></tr>
+        </tbody>
+    </MudSimpleTable>
+</MudPaper>
+
+<MudAlert Severity="Severity.Info" Class="mt-4">
+    @if (_config.Smtp.Plain.Enabled)
+    {
+        <text>Envía un correo con <code>@($"swaks --server {EndpointAddress.FormatHostPort(_config.Smtp.Plain.BindAddress, _config.Smtp.Plain.Port)} --from a@b.com --to c@d.com --body hola")</code></text>
+    }
+    else
+    {
+        <text>El listener SMTP en claro está deshabilitado (<code>Smtp:Plain:Enabled=false</code>), así que hay que usar el puerto @(_config.Smtp.StartTls.Port).</text>
+    }
+    y aparecerá en el listado sin recargar la página.
+</MudAlert>
+
+@code {
+    private SmtpMockupOptions _config = new();
+
+    /// <summary>Versión del ensamblado en ejecución.</summary>
+    private static string Version
+        => typeof(AboutPage).Assembly.GetName().Version?.ToString() ?? "(desconocida)";
+
+    /// <inheritdoc />
+    protected override void OnInitialized() => _config = Options.Value;
+}

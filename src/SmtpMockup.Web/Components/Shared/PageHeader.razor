@@ -1,0 +1,35 @@
+@* Un único sitio donde se compone el título de cada página con el nombre del producto. Poner
+   el sufijo «— smtp-mockup» a mano en cada página anulaba Web:Title: con
+   --Web:Title="Buzón de pruebas" la pestaña mostraba «Mensajes — smtp-mockup» en cuanto se
+   navegaba dentro de la app, tras un instante con el título correcto. *@
+@inject IOptions<WebOptions> WebOptions
+
+<PageTitle>@Compose(Text, WebOptions.Value.Title)</PageTitle>
+
+@code {
+    /// <summary>Texto específico de la página («Mensajes», «Estadísticas»…).</summary>
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Compone el título del documento a partir del texto de la página y del nombre del producto.
+    /// </summary>
+    /// <remarks>
+    /// Es una función pura y no una interpolación en el marcado por un motivo concreto: el
+    /// resultado de <c>&lt;PageTitle&gt;</c> lo intercepta el <c>HeadOutlet</c> y no aparece en el
+    /// markup del componente, así que un test de bUnit no lo ve. Con la composición fuera del
+    /// marcado se puede comprobar en un test que la página dice el nombre configurado y no el
+    /// literal —que es el bug que la dejó sin cubrir— sin depender de cómo Blazor enrute el
+    /// título.
+    /// </remarks>
+    /// <param name="text">Texto de la página.</param>
+    /// <param name="configuredTitle">Valor de <c>Web:Title</c>.</param>
+    /// <returns>Título completo, listo para el navegador.</returns>
+    internal static string Compose(string? text, string? configuredTitle)
+    {
+        var product = string.IsNullOrWhiteSpace(configuredTitle) ? "smtp-mockup" : configuredTitle;
+        var page = string.IsNullOrWhiteSpace(text) ? product : text.Trim();
+
+        return $"{page} — {product}";
+    }
+}

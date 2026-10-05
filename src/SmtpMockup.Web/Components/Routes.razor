@@ -1,0 +1,15 @@
+@* AppAssembly es el de esta RCL (no el del Host): es donde viven las páginas con @page. *@
+<Router AppAssembly="@typeof(SmtpMockup.Web.Components.App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(MainLayout)">
+            <MudText Typo="Typo.h4" Class="mt-8">No encontrado</MudText>
+            <MudText Class="mt-2">
+                La ruta no existe. <MudLink Href="/">Volver al listado</MudLink>
+            </MudText>
+        </LayoutView>
+    </NotFound>
+</Router>
