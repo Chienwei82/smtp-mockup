@@ -292,17 +292,19 @@ public sealed class SmtpListenerService(
             _portInUse = _configuredPort;
         }
 
+        var probeAddress = ProbeAddress();
+
         while (DateTime.UtcNow < deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
-                // Se sondea la dirección real, no IPAddress.Loopback fijo: con un bind fuera de
-                // loopback, un probe a 127.0.0.1 nunca conectaría y el arranque fallaría con un
-                // timeout que no explicaría la causa.
+                // Se sondea una dirección conectable, no IPAddress.Loopback fijo: con un
+                // bind fuera de loopback, un probe a 127.0.0.1 nunca conectaría y el arranque
+                // fallaría con un timeout que no explicaría la causa.
                 using var probe = new TcpClient();
-                await probe.ConnectAsync(_bindAddress, _portInUse, cancellationToken).ConfigureAwait(false);
+                await probe.ConnectAsync(probeAddress, _portInUse, cancellationToken).ConfigureAwait(false);
                 return;
             }
             catch (SocketException)
@@ -314,6 +316,33 @@ public sealed class SmtpListenerService(
         throw new TimeoutException(
             $"The SMTP listener on {EndpointAddress.FormatHostPort(_bindAddress.ToString(), _portInUse)} "
             + "did not start accepting connections.");
+    }
+
+    /// <summary>
+    /// Dirección a la que se sondea el socket ya abierto.
+    /// </summary>
+    /// <remarks>
+    /// Las comodines de escucha no son destinos: <see cref="IPAddress.Any"/> (el valor explícito
+    /// de <c>BindAddress=0.0.0.0</c>) no se puede <em>conectar</em>. En Linux conectar a 0.0.0.0
+    /// funciona por casualidad (el kernel lo traduce a loopback), y por eso el fallo solo
+    /// aparecía en Windows, donde el connect se rechaza y el arranque expiraba con un timeout
+    /// que no señalaba la causa. Sólo las comodines se remapean al loopback de su familia —que
+    /// es lo que ese socket acepta de verdad—; una dirección concreta se sondea tal cual, porque
+    /// con un bind fuera de loopback un probe a 127.0.0.1 nunca conectaría.
+    /// </remarks>
+    private IPAddress ProbeAddress()
+    {
+        if (_bindAddress.Equals(IPAddress.Any))
+        {
+            return IPAddress.Loopback;
+        }
+
+        if (_bindAddress.Equals(IPAddress.IPv6Any))
+        {
+            return IPAddress.IPv6Loopback;
+        }
+
+        return _bindAddress;
     }
 
     /// <summary>
