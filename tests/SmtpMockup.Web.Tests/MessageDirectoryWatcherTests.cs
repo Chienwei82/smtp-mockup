@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SmtpMockup.Core.Options;
 using SmtpMockup.Web.Services;
+using Microsoft.Extensions.Logging;
 
 namespace SmtpMockup.Web.Tests;
 
@@ -72,8 +73,8 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
         var watcher = CreateWatcher();
         await watcher.StartAsync(CancellationToken.None);
 
-        WriteMessageFile();
-        await WaitForRebuildAsync(watcher);
+        var path = WriteMessageFile();
+        await WaitForRebuildAsync(watcher, path);
 
         await watcher.StopAsync(CancellationToken.None);
 
@@ -86,8 +87,8 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
         var watcher = CreateWatcher();
         await watcher.StartAsync(CancellationToken.None);
 
-        WriteMessageFile();
-        await WaitForRebuildAsync(watcher);
+        var path = WriteMessageFile();
+        await WaitForRebuildAsync(watcher, path);
         await watcher.RefreshAsync();
 
         await watcher.StopAsync(CancellationToken.None);
@@ -156,9 +157,40 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
     /// (un <c>RefreshAsync</c> explícito, p. ej.) sí había reconstruido. Un test que espera
     /// 30 s y aun así sale verde no está probando nada.
     /// </remarks>
-    private async Task WaitForRebuildAsync(MessageDirectoryWatcher watcher)
+    /// <summary>
+    /// Espera a que el watcher reaccione, con tope de tiempo en vez de un <c>Thread.Sleep</c>
+    /// fijo: es lo que evita que la prueba sea intermitente en CI.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Fallaba de forma intermitente cuando sólo se escribía el archivo una vez. No era un
+    /// problema del watcher: una sonda con el mismo código detectó el cambio en 5 de 5 veces,
+    /// y los cinco tests pasaban siempre en solitario. Bajo carga (las pruebas en paralelo de
+    /// los demás proyectos compiten por la CPU) el evento de inotify de esa única escritura
+    /// llegaba tarde o se perdía, y los 30 s se consumían sin reconstruir nada.
+    /// </para>
+    /// <para>
+    /// La causa es que la prueba daba por hecho algo que <see cref="FileSystemWatcher"/> no
+    /// garantiza: que <em>una</em> escritura produce <em>un</em> evento. inotify agrupa y puede
+    /// descartar avisos bajo presión, así que un solo evento no es una señal fiable. Por eso
+    /// aquí se reescribe el archivo cada 250 ms hasta que el watcher reaccione: si el evento se
+    /// perdió, el siguiente lo recupera. El aserto sigue siendo real — si el watcher no
+    /// reacciona nunca, el plazo se agota y la prueba falla — y deja de depender de que un
+    /// único evento llegue a tiempo.
+    /// </para>
+    /// <para>
+    /// Antes devolvía en silencio al agotarse el plazo y dejaba que la aserción siguiente
+    /// decidiera, y eso ocultaba el fallo real: el watcher no había reconstruido nada, la
+    /// prueba gastaba los 30 s completos y luego pasaba igualmente porque otra vía (un
+    /// <c>RefreshAsync</c> explícito, p. ej.) sí había reconstruido. Un test que espera 30 s y
+    /// aun así sale verde no está probando nada.
+    /// </para>
+    /// </remarks>
+    private async Task WaitForRebuildAsync(MessageDirectoryWatcher watcher, string path)
     {
         var deadline = DateTime.UtcNow.AddSeconds(30);
+        var nextTouch = DateTime.UtcNow.AddMilliseconds(250);
+
         while (DateTime.UtcNow < deadline)
         {
             if (_store.RebuildCount > 0)
@@ -166,13 +198,20 @@ public sealed class MessageDirectoryWatcherTests : IDisposable
                 return;
             }
 
+            if (DateTime.UtcNow >= nextTouch)
+            {
+                WriteMessageFile(Path.GetFileName(path));
+                nextTouch = DateTime.UtcNow.AddMilliseconds(250);
+            }
+
             await Task.Delay(50);
         }
 
         Assert.Fail(
-            "The watcher never rebuilt the index within 30s of the file being created. "
-            + $"Watched directory: {watcher.WatchedDirectory}. If this is the first run on a "
-            + "machine with a low inotify limit, check fs.inotify.max_user_watches.");
+            "The watcher never rebuilt the index within 30s, even after rewriting the file every "
+            + "250ms to force a fresh filesystem event. Watched directory: "
+            + $"{watcher.WatchedDirectory}. If this is the first run on a machine with a low "
+            + "inotify limit, check fs.inotify.max_user_watches and fs.inotify.max_queued_events.");
     }
 
     [Fact]
