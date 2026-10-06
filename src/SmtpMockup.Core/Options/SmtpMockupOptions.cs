@@ -191,7 +191,7 @@ public sealed class WebOptions
     public bool Enabled { get; set; } = true;
 
     /// <summary>Puerto HTTP de la UI.</summary>
-    public int Port { get; set; } = 8080;
+    public int Port { get; set; } = 8888;
 
     /// <summary>Dirección de binding de la UI. Fuera de loopback ⇒ warning en el log.</summary>
     public string BindAddress { get; set; } = "127.0.0.1";

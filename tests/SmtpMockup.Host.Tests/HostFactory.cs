@@ -148,7 +148,7 @@ public sealed class HostFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
 
         // Puertos efímeros en los tres listeners: dos pruebas pueden correr en paralelo sin
-        // pelearse por el 8025/8443/8080 del desarrollo.
+        // pelearse por el 8025/8443/8888 del desarrollo.
         builder.UseSetting("Smtp:Plain:Enabled", Setting("Smtp:Plain:Enabled", "true"));
         builder.UseSetting("Smtp:Plain:Port", Setting("Smtp:Plain:Port", "0"));
         builder.UseSetting("Smtp:Plain:BindAddress", Setting("Smtp:Plain:BindAddress", "127.0.0.1"));

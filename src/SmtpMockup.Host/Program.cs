@@ -89,7 +89,7 @@ foreach (var kind in SmtpListenerSelection.GetEnabled(options))
 if (options.Web.Enabled)
 {
     // EndpointAddress compone la URL y no una interpolación: con 'Web:BindAddress=::1' la
-    // forma ingenua produce 'http://::1:8080', que es una autoridad ambigua y hace que
+    // forma ingenua produce 'http://::1:8888', que es una autoridad ambigua y hace que
     // Kestrel falle al arrancar. El validador acepta IPv6, así que aquí tiene que salir bien.
     builder.WebHost.UseUrls(EndpointAddress.FormatHttpUrl(options.Web.BindAddress, options.Web.Port));
 

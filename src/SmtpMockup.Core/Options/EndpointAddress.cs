@@ -58,9 +58,9 @@ public static class EndpointAddress
     /// Escribe <c>host:port</c> entre corchetes si el host es un literal IPv6.
     /// </summary>
     /// <remarks>
-    /// Sin esto, <c>http://::1:8080</c> es una autoridad ambigua —el parser lee el puerto
-    /// <c>8080</c> y el host <c>::1</c> como dos cosas distintas y Kestrel falla al arrancar—,
-    /// mientras que <c>http://[::1]:8080</c> es la URL correcta. Un literal IPv6 en
+    /// Sin esto, <c>http://::1:8888</c> es una autoridad ambigua —el parser lee el puerto
+    /// <c>8888</c> y el host <c>::1</c> como dos cosas distintas y Kestrel falla al arrancar—,
+    /// mientras que <c>http://[::1]:8888</c> es la URL correcta. Un literal IPv6 en
     /// <c>BindAddress</c> es válido y lo valida el validador, así que la URL tiene que salir bien.
     /// </remarks>
     /// <param name="bindAddress">Dirección de binding.</param>

@@ -4,7 +4,7 @@ Servidor SMTP falso para desarrollo con UI web incluida: acepta cualquier correo
 autenticación y sin relay, lo persiste como JSON y lo muestra en una interfaz Blazor para leerlo y
 borrarlo.
 
-- **Estado del documento:** v2.0 (post cambio de rumbo: se elimina la API HTTP)
+- **Estado del documento:** v2.1 (v2.0 cambió la API HTTP por la UI Blazor; v2.1 es un ajuste menor)
 - **Stack:** .NET 10 (`net10.0`), C# 14, Blazor Web App (Interactive Server), MailKit + MimeKit
 - **Documento contraparte:** `DESIGN.md` (decisiones técnicas, empaquetado y plan)
 
@@ -90,7 +90,7 @@ Proveer un ejecutable local de un solo proceso que:
 
 | Supuesto | Valor por defecto | Justificación |
 |----------|-------------------|---------------|
-| UI web escucha en | `http://127.0.0.1:8080` | Loopback: los correos son sensibles y la UI no tiene auth |
+| UI web escucha en | `http://127.0.0.1:8888` | Loopback: los correos son sensibles y la UI no tiene auth |
 | Puerto SMTP plano | `8025` | Convención de herramientas similares (MailHog/Mailpit) |
 | Puerto SMTP STARTTLS | `8443` | Equivalente TLS de 8025 |
 | Dirección de binding SMTP | `127.0.0.1` (`Smtp:Plain:BindAddress`, `Smtp:StartTls:BindAddress`) | Igual que la UI: el mockup acepta cualquier correo sin autenticación, así que exponerlo a la red local es una decisión explícita, no un default. Fuera de loopback ⇒ **warning** en el log, no error |
@@ -196,7 +196,7 @@ Dependencias (sin ciclos):
   },
   "Web": {
     "Enabled": true,
-    "Port": 8080,
+    "Port": 8888,
     "BindAddress": "127.0.0.1",
     "Title": "smtp-mockup",
     "DefaultPageSize": 50,
@@ -212,7 +212,7 @@ Dependencias (sin ciclos):
 | Clave | Tipo | Default | Regla |
 |-------|------|---------|-------|
 | `Enabled` | bool | `true` | `false` ⇒ no se mapea Blazor; el proceso sigue sirviendo SMTP |
-| `Port` | int | `8080` | 0–65535 (0 = puerto efímero); ocupado ⇒ fail-fast |
+| `Port` | int | `8888` | 0–65535 (0 = puerto efímero); ocupado ⇒ fail-fast |
 | `BindAddress` | string | `127.0.0.1` | literal IPv4/IPv6; fuera de loopback ⇒ warning en log |
 | `Title` | string | `smtp-mockup` | título del navegador y de la barra superior; vacío ⇒ `smtp-mockup` |
 | `DefaultPageSize` | int | `50` | usada cuando el usuario no elige tamaño de página |
@@ -535,7 +535,7 @@ Reglas:
     envía contra 8443 sin credenciales y el mensaje aparece persistido como el resto.
 
 ### 11.2 UI Blazor
-8. Navegar a `http://127.0.0.1:8080/` con la UI habilitada ⇒ listado renderizado en el primer
+8. Navegar a `http://127.0.0.1:8888/` con la UI habilitada ⇒ listado renderizado en el primer
    request (Interactive Server conectado; no hay errores de `_framework` en la consola).
 9. Enviar un correo por SMTP con el navegador abierto en el listado ⇒ la fila aparece sola en < 2 s
    sin recargar (verificable con un test de `MailStoreChangedEventArgs` y con inspección manual).
@@ -544,7 +544,7 @@ Reglas:
 11. Abrir el detalle ⇒ envelope, headers, cuerpo texto/HTML y adjuntos; descargar un adjunto
     devuelve el binario exacto y el nombre original.
 12. Búsqueda por texto libre y por rango de fechas ⇒ solo devuelve los mensajes que cumplen el filtro.
-13. Con `Web:Enabled=false` ⇒ `http://127.0.0.1:8080/` no responde, pero SMTP sigue aceptando.
+13. Con `Web:Enabled=false` ⇒ `http://127.0.0.1:8888/` no responde, pero SMTP sigue aceptando.
 14. Con `Web:BindAddress=0.0.0.0` ⇒ warning en el log de arranque.
 
 ### 11.3 Publicación single-file con assets estáticos de Blazor (Windows y Linux)
@@ -593,7 +593,7 @@ Reglas:
 | Ítem | Detalle |
 |------|---------|
 | Proyecto `src/SmtpMockup.Web/` | Blazor Web App .NET 10, Interactive Server, con `Components/Pages`, `Components/Shared` y `wwwroot` |
-| Configuración `Web:*` | `Enabled`, `Port` (8080), `BindAddress` (127.0.0.1), `Title`, `DefaultPageSize`, `MaxPageSize`, `ShowRawMimeDownload`, `MaxHtmlPreviewBytes`, `LiveUpdateDebounceMilliseconds`, `WatchDirectory` |
+| Configuración `Web:*` | `Enabled`, `Port` (8888), `BindAddress` (127.0.0.1), `Title`, `DefaultPageSize`, `MaxPageSize`, `ShowRawMimeDownload`, `MaxHtmlPreviewBytes`, `LiveUpdateDebounceMilliseconds`, `WatchDirectory` |
 | `event Changed` en `IMailStore` + `MailStoreChangedEventArgs` / `MailStoreChangeKind` | Notificación de guardado y borrado para actualización en vivo (RF-13) |
 | `MailStoreChangeNotifier` en Storage | Implementación concreta, con debounce de 250 ms y handlers protegidos |
 | Páginas `/`, `/messages/{id}`, `/stats`, `/settings`, `/about` | Listado, detalle, estadísticas, configuración read-only y about |
@@ -615,6 +615,16 @@ Reglas:
 **Impacto en el árbol**: no hay archivos de código para borrar todavía (el repositorio solo contiene
 documentación y configuración). Lo que queda obsoleto son referencias en los documentos y en el
 memory-bank; ver §13.
+
+---
+
+### v2.1 — 2026-10-06 — Ajustes
+
+| Ítem | Detalle |
+|------|---------|
+| `Web:Port` por defecto | `8080` → `8888` (el 8080 choca a menudo con otros servicios de desarrollo). Sigue siendo configurable y admite `0` (efímero) |
+| Scripts de envío de prueba | `scripts/mockup_mailer.py` (módulo: cliente SMTP + generador de historias) y `scripts/send_story_mails.py` (manda tres correos de prueba con historias clásicas y graciosas generadas) |
+| Publicación con configuración | `scripts/publish-with-config.py`: publica como `publish.py` y, antes, pregunta si se quiere TLS y qué puertos usar; deja la respuesta escrita en el `appsettings.json` que se publica |
 
 ---
 

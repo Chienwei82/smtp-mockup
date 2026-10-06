@@ -77,14 +77,14 @@ public sealed class EndpointDisplayTests
     {
         await using var context = new ListContext(smtpOptions: new SmtpMockupOptions
         {
-            Web = new WebOptions { Enabled = true, Port = 8080, BindAddress = "::1" },
+            Web = new WebOptions { Enabled = true, Port = 8888, BindAddress = "::1" },
         });
 
         var component = context.Render<AboutPage>();
 
-        // 'http://::1:8080' no es una URL: la autoridad es ambigua y ni el navegador ni
+        // 'http://::1:8888' no es una URL: la autoridad es ambigua y ni el navegador ni
         // Kestrel la entenderían.
-        Assert.Contains("http://[::1]:8080", component.Markup, StringComparison.Ordinal);
+        Assert.Contains("http://[::1]:8888", component.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

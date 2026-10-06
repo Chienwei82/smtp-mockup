@@ -62,7 +62,7 @@ public sealed class OptionsValidationTests
         Assert.True(options.Certificate.UseDevelopmentCertificate);
         Assert.Equal("data/messages", options.Storage.Directory);
         Assert.True(options.Web.Enabled);
-        Assert.Equal(8080, options.Web.Port);
+        Assert.Equal(8888, options.Web.Port);
         Assert.Equal("127.0.0.1", options.Web.BindAddress);
     }
     [Theory]
@@ -223,7 +223,7 @@ public sealed class OptionsValidationTests
     [Theory]
     [InlineData("not-an-ip")]
     [InlineData("")]
-    [InlineData("127.0.0.1:8080")]
+    [InlineData("127.0.0.1:8888")]
     public void Invalid_web_bind_address_fails(string bindAddress)
     {
         var options = new WebOptions { BindAddress = bindAddress };

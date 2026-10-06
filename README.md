@@ -7,7 +7,7 @@ que se actualiza sola. Un solo proceso, un solo ejecutable, sin dependencias nat
 - **SMTP en claro** en `127.0.0.1:8025` (sin credenciales, sin cifrar).
 - **SMTP con STARTTLS** en `127.0.0.1:8443`; el certificado autofirmado se genera solo la primera
   vez y se persiste.
-- **UI web** en `http://127.0.0.1:8080/`: listado, filtros, detalle con cuerpos y adjuntos,
+- **UI web** en `http://127.0.0.1:8888/`: listado, filtros, detalle con cuerpos y adjuntos,
   descargas y borrado.
 - Persistencia en archivos JSON particionados por día, junto al ejecutable (`data/messages/`).
 
@@ -38,15 +38,15 @@ smtp-mockup.exe                   # Windows
 ```
 
 Con los valores por defecto quedan escuchando `127.0.0.1:8025` (SMTP en claro),
-`127.0.0.1:8443` (STARTTLS) y `127.0.0.1:8080` (la UI). Las primeras líneas del log dicen el modo
+`127.0.0.1:8443` (STARTTLS) y `127.0.0.1:8888` (la UI). Las primeras líneas del log dicen el modo
 de ejecución, los puertos y dónde se escribe:
 
 ```
 info: SmtpMockup.Startup[0] Running as Console (configured Hosting:Mode=Auto, started by SCM=False); …
 info: SmtpMockup.Startup[0] SMTP listeners configured: plain=True on 127.0.0.1:8025, secure=True on 127.0.0.1:8443 (security=StartTls, max 25 MB)
 info: SmtpMockup.Smtp.SmtpListenerService[0] SMTP listener started kind=Plain endpoint=127.0.0.1:8025 security=None maxMessageSizeBytes=26214400 certificate=(none)
-info: SmtpMockup.Startup[0] Web UI configured on http://127.0.0.1:8080
-info: Microsoft.Hosting.Lifetime[14] Now listening on: http://127.0.0.1:8080
+info: SmtpMockup.Startup[0] Web UI configured on http://127.0.0.1:8888
+info: Microsoft.Hosting.Lifetime[14] Now listening on: http://127.0.0.1:8888
 ```
 
 ## Configuración
@@ -102,7 +102,7 @@ Smtp__Plain__Port=9325 Smtp__StartTls__Enabled=false Web__Port=9380 ./smtp-mocku
 | `Storage:MaxRawMimeBytes` | `10485760` | Tope del MIME crudo (`0` = sin tope) |
 | `Storage:WriteIndented` | `true` | JSON con sangría |
 | `Web:Enabled` | `true` | Si es `false` no hay UI, pero el SMTP sigue |
-| `Web:Port` | `8080` | Puerto HTTP (`0` = efímero) |
+| `Web:Port` | `8888` | Puerto HTTP (`0` = efímero) |
 | `Web:BindAddress` | `127.0.0.1` | Fuera de loopback ⇒ aviso en el log (no hay auth) |
 | `Web:Title` | `smtp-mockup` | Título del navegador y de la barra superior |
 | `Web:DefaultPageSize` | `50` | Filas por página |
@@ -263,9 +263,27 @@ s.sendmail('dev@example.com', ['destino@example.com'],
 s.quit()
 ```
 
+### Tres correos con historias generadas (`scripts/`)
+
+El repositorio trae dos scripts de Python, sin dependencias (sólo la biblioteca estándar), que mandan
+al mockup **tres correos distintos**, cada uno con una historia clásica y graciosa generada al azar
+(una fábula, un cuento de tres y un chiste). Prueban, de paso, las tres formas del mismo mensaje: sólo
+texto, texto + HTML, y texto + HTML con un adjunto `.txt`.
+
+```bash
+python3 scripts/send_story_mails.py              # 127.0.0.1:8025, en claro
+python3 scripts/send_story_mails.py --starttls    # 127.0.0.1:8443, con STARTTLS
+python3 scripts/send_story_mails.py --dry-run     # genera y no envía
+python3 scripts/mockup_mailer.py --seed 7 --html  # sólo previsualizar las historias
+```
+
+`scripts/mockup_mailer.py` es el módulo (cliente SMTP y generador de historias, con una herramienta de
+previsualización) y `scripts/send_story_mails.py` es el que envía. Verificado contra el binario
+publicado: los tres mensajes se aceptan con `250` y aparecen en la UI.
+
 ## Abrir la UI
 
-Con el proceso corriendo, en <http://127.0.0.1:8080/>:
+Con el proceso corriendo, en <http://127.0.0.1:8888/>:
 
 | Ruta | Contenido |
 |---|---|
@@ -298,7 +316,7 @@ El nombre del archivo es un ULID (ordenable por tiempo) dentro de una carpeta po
 el sobre (`envelope` con IP y puerto remoto, `MAIL FROM`, `RCPT TO`, transporte y TLS), las
 direcciones (`from`/`to`/`cc`/`bcc`, con el **Bcc recuperado del sobre**), los cuerpos de texto y
 HTML, los adjuntos con su SHA-256 y el MIME original en base64. El esquema completo está en
-[`memory-bank/apiReference.md`](memory-bank/apiReference.md).
+[`SPEC.md` §7](SPEC.md).
 
 Los archivos se pueden leer, editar o borrar a mano: la UI se entera sola.
 
@@ -323,6 +341,18 @@ más a repartir un binario roto. Al terminar **verifica el artefacto** (que exis
 Un detalle que el script respeta por ti: al refrescar un RID **no borra `data/`, `certs/` ni
 `logs/`**, porque ahí están los correos que le has mandado y el PFX autofirmado. Se borran sólo con
 `--clean-data`.
+
+Si quieres publicar dejando ya fijados los puertos y el TLS, hay una variante interactiva:
+
+```bash
+python3 scripts/publish-with-config.py            # pregunta: ¿TLS? ¿puertos por defecto o nuevos?
+python3 scripts/publish-with-config.py --yes       # sin preguntar (TLS no, puertos por defecto)
+python3 scripts/publish-with-config.py --zip       # además, un .zip con esa config dentro
+```
+
+Escribe la respuesta en el `appsettings.json` **publicado** (nunca en el del repo), así que el binario
+—y el `.zip`, si pides `--zip`— arranca ya con ella. Imprime además los argumentos equivalentes
+(`--Smtp:Plain:Port=…`, `--Web:Port=…`) por si prefieres pasarlos al ejecutable en vez de editar el JSON.
 
 Si prefieres hacerlo a mano (o no tienes Python):
 
@@ -564,9 +594,9 @@ para que el bug de `Smtp:Plain:Enabled` pasara inadvertido.
 
 ### 3. Sin CI 🟡
 
-No hay workflow: nada impide mergear con la suite en rojo. El plan ya está escrito en
-`memory-bank/techContext.md`: `restore → build -warnaserror → test` en las tres plataformas, más un
-job de `publish` que falle si el artifact no trae `wwwroot/_framework`.
+No hay workflow: nada impide mergear con la suite en rojo. El plan: `restore → build -warnaserror →
+test` en las tres plataformas, más un job de `publish` que falle si el artifact no trae
+`wwwroot/_framework`.
 
 ### 4. `envelope.helo` siempre `null` 🟢
 
@@ -653,7 +683,6 @@ El resto de la lista, por valor:
 | [`docs/web-ui.md`](docs/web-ui.md) | Cómo funciona la UI, actualización en vivo, constraints de publicación |
 | [`docs/hosting-modes.md`](docs/hosting-modes.md) | Consola vs servicio, publicación, permisos, operación |
 | [`docs/certificate-trust.md`](docs/certificate-trust.md) | Cómo confiar el certificado en Windows y en Linux |
-| `memory-bank/` | Contexto del proyecto para el trabajo futuro |
 
 ## Licencia
 
