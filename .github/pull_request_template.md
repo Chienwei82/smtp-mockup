@@ -9,7 +9,7 @@
 ## Cómo lo he comprobado
 
 <!-- Qué has ejecutado y qué has visto. El CI hace `dotnet build -warnaserror` + la suite entera
-     en ubuntu, windows y macos, y publica el zip de las tres plataformas; no hace falta que lo
+     en ubuntu y windows, y publica el zip de las dos plataformas; no hace falta que lo
      repitas, pero sí que digas cómo lo has probado en local. -->
 
 ## Checklist

@@ -399,11 +399,11 @@ PR** y en cada push a `main`, y hace dos cosas:
 
 | Job | Qué hace |
 |---|---|
-| `test (ubuntu/windows/macos)` | `dotnet restore` → `dotnet build -warnaserror` → suite completa en las tres plataformas |
-| `publish (linux-x64 / win-x64 / osx-arm64)` | Corre `scripts/publish.py --zip` en el runner de cada plataforma y sube el `.zip` como artefacto de la corrida |
+| `test (ubuntu/windows)` | `dotnet restore` → `dotnet build -warnaserror` → suite completa en las dos plataformas |
+| `publish (linux-x64 / win-x64)` | Corre `scripts/publish.py --zip` en el runner de cada plataforma y sube el `.zip` como artefacto de la corrida |
 
 No hay despliegue a ningún sitio: nada se publica en un servidor, solo se generan los zips. Cada
-PR da tres zips descargables desde la pestaña **Artifacts**, uno por plataforma.
+PR da dos zips descargables desde la pestaña **Artifacts**, uno por plataforma.
 
 Tres detalles del workflow que no son obvios:
 
