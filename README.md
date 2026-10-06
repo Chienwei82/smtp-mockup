@@ -565,14 +565,12 @@ pwsh -File scripts/ServiceImagePath.Tests.ps1           # 14 casos de los script
    cualquier otro `if` nuevo en `Program.cs` volverá a estar sin cubrir.
 3. **No hay E2E de la UI con navegador.** Los criterios 9 y 10 están cubiertos a nivel de componente
    (bUnit), no de punta a punta. Un Playwright sobre el binario publicado cerraría el círculo.
-4. **No hay CI.** Nada corre los tests automáticamente: `restore → build -warnaserror → test` en
-   Linux/Windows, más un `publish` que verifique `wwwroot/_framework`.
-5. **`envelope.helo` es siempre `null`** (la librería no expone el dominio EHLO/HELO). El campo
+4. **`envelope.helo` es siempre `null`** (la librería no expone el dominio EHLO/HELO). El campo
    existe y es nullable, y nada depende de él todavía.
 
 ## Deuda técnica
 
-Ordenada por lo que cuesta más si se deja para mañana. Los tres primeros son los que importan.
+Ordenada por lo que cuesta más si se deja para mañana. Los dos primeros son los que importan.
 
 > **Lo que ya se arregló en la revisión de código** (y por qué no aparece aquí): `Smtp:Plain:Enabled=false`
 > no desactivaba el listener en claro (criterio 3 de §11.1); `size.bodyBytes` contaba caracteres en vez
@@ -592,30 +590,24 @@ abre (servicios, listeners, URLs) sigue dependiendo de revisión manual. Un `Web
 puertos efímeros que compruebe qué queda escuchando cerraría el hueco de raíz, y es lo que faltó
 para que el bug de `Smtp:Plain:Enabled` pasara inadvertido.
 
-### 3. Sin CI 🟡
-
-No hay workflow: nada impide mergear con la suite en rojo. El plan: `restore → build -warnaserror →
-test` en las dos plataformas, más un job de `publish` que falle si el artifact no trae
-`wwwroot/_framework`.
-
-### 4. `envelope.helo` siempre `null` 🟢
+### 3. `envelope.helo` siempre `null` 🟢
 
 La librería SMTP no expone el dominio de EHLO/HELO. El campo queda en el esquema y es nullable; si
 alguna vez hace falta, hay que subirlo por el cable (`Server.OnHeloReceived`) o sacarlo del primer
 header `Received`.
 
-### 5. Nombre del valor de transporte 🟢
+### 4. Nombre del valor de transporte 🟢
 
 El JSON escribe `"transport": "startTls"` mientras que SPEC §11.1 habla de `"StartTls"`. No rompe
 nada (nadie lo compara), pero es una discrepancia entre el documento y el dato persistido que va a
 confundir a quien lo lea.
 
-### 6. Publicación de Linux sin perfil 🟢
+### 5. Publicación de Linux sin perfil 🟢
 
 Sólo hay `.pubxml` para `win-x64`; el publish de Linux hay que hacerlo con los flags a mano (el
 comando está documentado más arriba). Con un `linux-x64.pubxml` los dos serían simétricos.
 
-### 7. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
+### 6. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
 
 SPEC §11.3 (criterio 19) los menciona. Ahora hay **un** script, `scripts/publish.py`, que hace
 compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las dos plataformas.
@@ -630,7 +622,7 @@ escribirse (que lleve el ejecutable, `wwwroot/_framework/blazor.web.js` y `appse
 **no** se lleve `data/`, `certs/` ni `logs/`). Verificado descomprimiendo el zip en `/tmp` y
 arrancando desde ahí: UI en 200, estáticos en 200 y correo aceptado.
 
-### 8. ~~Todo el trabajo está sin commitear~~ ✅ resuelto
+### 7. ~~Todo el trabajo está sin commitear~~ ✅ resuelto
 
 Estaba todo sin trackear sobre un único commit de documentación. El proyecto está en GitHub con la
 implementación, la documentación y los scripts versionados.
@@ -655,23 +647,21 @@ El resto de la lista, por valor:
 
 1. **Tests directos de `FileSystemMessageStore`** (la deuda #1) y un test de arranque del Host con
    puertos efímeros (la #2). Es lo único que bloquea de verdad.
-2. **CI**: un `.github/workflows/ci.yml` con `restore → build -warnaserror → test` en
-   Linux/Windows, más el job de `publish` que verifique `wwwroot/_framework`.
-3. **Retención automática (TTL).** `Hosting:LogRetentionDays` ya poda los logs; los mensajes se
+2. **Retención automática (TTL).** `Hosting:LogRetentionDays` ya poda los logs; los mensajes se
    acumulan sin límite. Sería `Storage:RetentionDays` con una poda periódica.
-4. **Borrado con papelera.** Hoy el borrado es duro (se borra el archivo). Un `Storage:SoftDelete`
+3. **Borrado con papelera.** Hoy el borrado es duro (se borra el archivo). Un `Storage:SoftDelete`
    evitaría el «lo borré sin querer» con poco trabajo.
-5. **Búsqueda por texto completo.** El `search` actual mira asunto, remitente y destinatario con
+4. **Búsqueda por texto completo.** El `search` actual mira asunto, remitente y destinatario con
    `Contains`; un índice invertido sobre las cabeceras daría coincidencias parciales de verdad.
-6. **Adjuntos grandes fuera del JSON.** Hoy un adjunto de más de 4 MB queda `omitted: true` y no se
+5. **Adjuntos grandes fuera del JSON.** Hoy un adjunto de más de 4 MB queda `omitted: true` y no se
    puede descargar. Guardarlo como archivo suelto junto al JSON (el hash como nombre) elimina ese
    techo sin cambiar el esquema.
-7. **Límite de conexiones simultáneas.** El RNF-02 lo pide, pero `SmtpServer` 11.1.0 no expone
+6. **Límite de conexiones simultáneas.** El RNF-02 lo pide, pero `SmtpServer` 11.1.0 no expone
    ninguna opción de concurrencia (`MaxRetryCount`, `MaxAuthenticationAttempts` y `MaxMessageSize`
    es lo más cercano), así que habría que hacerlo en casa sobre `IServer`'s o cambiar de librería.
    La clave `MaxConcurrentConnections` se retiró de la SPEC y de `appsettings.json` en lugar de
    dejar una opción que no hace nada.
-8. **Tope de circuitos de Blazor.** Con muchas pestañas abiertas los circuitos se acumulan; conviene
+7. **Tope de circuitos de Blazor.** Con muchas pestañas abiertas los circuitos se acumulan; conviene
    un `CircuitOptions` con un límite por cliente.
 
 ## Documentos del repositorio
