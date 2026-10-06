@@ -6,7 +6,7 @@ componentes, empaquetado (incluido el de los assets estáticos de Blazor) y estr
 - **Paquete objetivo:** `net10.0`
 - **Lenguaje:** C# 14 (`LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors`)
 - **Formato de solución:** `slnx` (solución de .NET 10) o `sln` clásica si la tooling lo exige
-- **Versión del documento:** v2.0 (post cambio de rumbo: Blazor Web App en lugar de API HTTP)
+- **Versión del documento:** v2.2 (v2.0: Blazor Web App en lugar de API HTTP; v2.1: ajuste del puerto por defecto de la UI y scripts nuevos; v2.2: se retira el soporte de macOS)
 
 > Cambio de rumbo aplicado: se elimina la API HTTP (proyecto `Api`, endpoints, OpenAPI, CORS) y se
 > agrega `SmtpMockup.Web` (Blazor Web App, Interactive Server) dentro del mismo proceso. Ver §11.
@@ -60,7 +60,7 @@ Microsoft.AspNetCore.Mvc.Testing                (test de hosting del Host)
                   └──┬───────────────┬───────────────────┬───────────────┬────────────┘
                      │               │                   │               │
      SmtpListenerService  SmtpListenerService  TempFilePurger  Blazor Interactive Server
-        (puerto 8025)       (puerto 8443)      HostedService   (Kestrel :8080, circuito)
+        (puerto 8025)       (puerto 8443)      HostedService   (Kestrel :8888, circuito)
                      │               │                   │        ┌──────┴───────┐
                      └───────┬───────┘                   │        │              │
                       MimeKitParser                       │   MessageList   MessageDetail
@@ -175,7 +175,7 @@ El orden importa: el `250` (paso 7) y el evento (paso 5) sólo ocurren tras pers
   `MapRazorComponents<App>().AddInteractiveServerRenderMode()` solo si `Web:Enabled`.
 - URL del host: `builder.WebHost.UseUrls(EndpointAddress.FormatHttpUrl(Web:BindAddress, Web:Port))` solo si
   `Web:Enabled`. Se compone con `EndpointAddress.FormatHttpUrl` y no con una interpolación: un
-  literal IPv6 como `::1` produciría `http://::1:8080`, que es una autoridad ambigua y hace que
+  literal IPv6 como `::1` produciría `http://::1:8888`, que es una autoridad ambigua y hace que
   Kestrel falle al arrancar.
 - `UseWindowsService()` solo en Windows y solo si corre como servicio.
 - `SmtpMockup.Host.csproj`: `OutputType=Exe`, `AssemblyName=smtp-mockup`, `WebRoot` = `wwwroot`
@@ -204,7 +204,7 @@ El orden importa: el `250` (paso 7) y el evento (paso 5) sólo ocurren tras pers
 
 | Destino | Comando / forma | Resultado esperado |
 |---------|-----------------|--------------------|
-| Linux/macOS, exe portable | `dotnet publish -r linux-x64 --self-contained` | `smtp-mockup` + `wwwroot/` |
+| Linux, exe portable | `dotnet publish -r linux-x64 --self-contained` | `smtp-mockup` + `wwwroot/` |
 | Windows, exe portable | `dotnet publish -r win-x64 --self-contained` | `smtp-mockup.exe` + `wwwroot/` |
 | Windows Service | `sc.exe create smtp-mockup binPath= "C:\...\smtp-mockup.exe" start= auto` + `UseWindowsService()` | Servicio con reinicio; la UI sirve en `Web:Port` |
 | Contenedor (fuera de v1) | imagen copiando el publish | rootless con puertos configurables |
@@ -309,7 +309,7 @@ Convenciones: un test = un comportamiento; sin `Thread.Sleep` (se usan `TaskComp
 con timeout y puertos efímeros) para evitar flakes en CI. Los tests de Blazor usan un
 `TestContext` propio con `IMailStore` fake que emite `Changed` de forma determinista.
 
-CI: `restore` → `build -warnaserror` → `test` en matrix `[ubuntu-latest, windows-latest, macos-latest]`,
+CI: `restore` → `build -warnaserror` → `test` en matrix `[ubuntu-latest, windows-latest]`,
 más un job de `publish` que verifica que el artefacto contiene `exe + wwwroot`.
 
 ---
@@ -372,7 +372,7 @@ más un job de `publish` que verifica que el artefacto contiene `exe + wwwroot`.
 
 ### v2.0 — se agregó
 - Proyecto `SmtpMockup.Web` (Blazor Web App .NET 10, Interactive Server) y `SmtpMockup.Web.Tests`
-  (bUnit); config `Web:*` (`Enabled`, `Port` 8080, `BindAddress` 127.0.0.1, `Title`,
+  (bUnit); config `Web:*` (`Enabled`, `Port` 8888, `BindAddress` 127.0.0.1, `Title`,
   `DefaultPageSize`, `MaxPageSize`, `ShowRawMimeDownload`,
   `MaxHtmlPreviewBytes`); `event IMailStore.Changed` + `MailStoreChangedEventArgs` (D-11);
   `MailStoreChangeNotifier` con debounce; páginas `/`, `/messages/{id}`, `/stats`, `/settings`,
@@ -394,3 +394,17 @@ referencias documentales y el memory-bank; ver `SPEC.md` §13. En la práctica:
 - `Microsoft.AspNetCore.Mvc.Testing` queda solo para el test de hosting.
 - El memory-bank (`projectbrief`, `productContext`, `activeContext`, `systemPatterns`,
   `techContext`, `progress`, `apiReference`) se actualiza para reflejar Blazor en lugar de API.
+
+### v2.1 — se agregó (2026-10-06)
+- `Web:Port` por defecto `8080` → `8888` (sigue siendo configurable; `0` = puerto efímero).
+- `scripts/mockup_mailer.py` (módulo: cliente SMTP a 8025/8443 con STARTTLS opcional + generador de
+  historias) y `scripts/send_story_mails.py` (tres correos de prueba: solo texto, texto + HTML, y
+  texto + HTML + adjunto).
+- `scripts/publish-with-config.py`: variante interactiva de `publish.py` que pregunta si se quiere TLS
+  (por defecto **no**) y qué puertos usar (por defecto, los actuales), y escribe la respuesta en el
+  `appsettings.json` publicado **antes** de armar el zip.
+
+### v2.2 — se quitó (2026-10-06)
+- Soporte de macOS: la matriz de CI pasa a `[ubuntu-latest, windows-latest]`, se elimina el job de
+  publish `osx-arm64` y RNF-05/RNF-09 (SPEC) dejan de nombrar macOS. `PfxKeyStorage` mantiene la
+  clave efímera solo en Linux (Windows no la usa en el handshake).

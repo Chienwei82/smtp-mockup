@@ -4,7 +4,7 @@ namespace SmtpMockup.Core.Tests;
 
 /// <summary>
 /// Composición y clasificación de direcciones de binding (D-1, D-2). El caso que más importa es
-/// el de IPv6: sin las corchetes, <c>http://::1:8080</c> es una autoridad ambigua y Kestrel no
+/// el de IPv6: sin las corchetes, <c>http://::1:8888</c> es una autoridad ambigua y Kestrel no
 /// arranca, así que estos tests fijan la diferencia entre las dos formas.
 /// </summary>
 public sealed class EndpointAddressTests
@@ -43,18 +43,18 @@ public sealed class EndpointAddressTests
         => Assert.Equal(expected, EndpointAddress.IsValidLiteral(bindAddress));
 
     [Theory]
-    [InlineData("127.0.0.1", 8080, "127.0.0.1:8080")]
+    [InlineData("127.0.0.1", 8888, "127.0.0.1:8888")]
     [InlineData("0.0.0.0", 25, "0.0.0.0:25")]
-    // El motivo de que esta función exista: sin corchetes, '::1:8080' se lee como un host y un
+    // El motivo de que esta función exista: sin corchetes, '::1:8888' se lee como un host y un
     // puerto que no cuadran.
-    [InlineData("::1", 8080, "[::1]:8080")]
+    [InlineData("::1", 8888, "[::1]:8888")]
     [InlineData("::", 8443, "[::]:8443")]
     public void FormatHostPort_brackets_ipv6_literals(string bindAddress, int port, string expected)
         => Assert.Equal(expected, EndpointAddress.FormatHostPort(bindAddress, port));
 
     [Theory]
-    [InlineData("127.0.0.1", 8080, "http://127.0.0.1:8080")]
-    [InlineData("::1", 8080, "http://[::1]:8080")]
+    [InlineData("127.0.0.1", 8888, "http://127.0.0.1:8888")]
+    [InlineData("::1", 8888, "http://[::1]:8888")]
     public void FormatHttpUrl_is_parsable_by_system_uri(string bindAddress, int port, string expected)
     {
         var url = EndpointAddress.FormatHttpUrl(bindAddress, port);

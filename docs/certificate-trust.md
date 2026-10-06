@@ -146,15 +146,13 @@ No es un fallo del mockup: cuando el dev-certs no está disponible (o el almacé
    relativo se resuelve contra la carpeta del ejecutable, y el PFX debe estar junto al `.exe`.
 
 
-## 5. Otras plataformas
+## 5. Linux
 
 - **Linux** — el almacén del sistema es de todo el sistema, así que lo habitual es que el
   cliente acepte explícitamente el certificado en vez de tocar `/usr/local/share/ca-certificates`
   (que requiere permisos y dejaría el mockup confiable para todos). En los tests de este repo el
   cliente MailKit acepta el certificado con `ServerCertificateValidationCallback`, que es el
   equivalente de "confiar en este certificado para esta aplicación".
-- **macOS** — usar el *keychain* de login; la alternativa es desactivar la validación en el
-  cliente de pruebas.
 
 ## 6. Si preferís un certificado propio
 

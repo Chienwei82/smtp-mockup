@@ -32,8 +32,8 @@ public static class HostingModeResolver
     /// <item><description><c>Console</c>: consola, aunque el SCM nos haya arrancado. Es un error
     /// de configuración y por eso devuelve <c>false</c> en <paramref name="wasStartedByServiceManager"/>
     /// para que el Host pueda avisar.</description></item>
-    /// <item><description><c>WindowsService</c>: servicio. En Linux o macOS degrada a consola
-    /// (no hay SCM) sin fallar.</description></item>
+    /// <item><description><c>WindowsService</c>: servicio. En Linux degrada a consola (no hay SCM)
+    /// sin fallar.</description></item>
     /// </list>
     /// </remarks>
     /// <param name="configuredMode">Modo pedido en <c>Hosting:Mode</c>.</param>

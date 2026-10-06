@@ -39,7 +39,7 @@ jobs:
       # Que se vea qué plataforma falla en vez de cancelar las demás al primer fallo.
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
 
@@ -103,8 +103,6 @@ jobs:
             rid: linux-x64
           - os: windows-latest
             rid: win-x64
-          - os: macos-latest
-            rid: osx-arm64
     steps:
       - uses: actions/checkout@v7
 
@@ -125,7 +123,7 @@ jobs:
           python-version: '3.12'
 
       # --skip-tests porque esta matriz depende de `test`: repetir aquí la suite entera en las
-      # tres plataformas solo duplicaría el gasto sin comprobar nada que el otro job no compruebe.
+      # dos plataformas solo duplicaría el gasto sin comprobar nada que el otro job no compruebe.
       # El script igual hace restore + build + publish, y verify_publish + verify_zip ya
       # comprueban que el wwwroot de Blazor viaja y que data/ y certs/ no se empaquetan.
       - name: Publicar y empaquetar

@@ -7,7 +7,7 @@ binarios ni un flag que mantener sincronizado: el proceso decide al arrancar (D-
 
 `Hosting:Mode` decide la política y el entorno decide el resultado:
 
-| `Hosting:Mode` | Windows, arrancado por el SCM | Windows, desde una terminal | Linux / macOS |
+| `Hosting:Mode` | Windows, arrancado por el SCM | Windows, desde una terminal | Linux |
 | --- | --- | --- | --- |
 | `Auto` (default) | Servicio | Consola | Consola |
 | `Console` | Consola + aviso por stderr | Consola | Consola |
@@ -260,7 +260,7 @@ Pendiente de una máquina Windows real; en Linux sólo se puede validar la detec
 ## La UI y el servicio
 
 Con `Web:Enabled=true` (por defecto) el proceso también escucha HTTP en
-`Web:BindAddress:Web:Port`, que por defecto es `127.0.0.1:8080`. Lo que cambia al instalarlo como
+`Web:BindAddress:Web:Port`, que por defecto es `127.0.0.1:8888`. Lo que cambia al instalarlo como
 servicio:
 
 | Tema | Servicio | Consola |
@@ -268,6 +268,6 @@ servicio:
 | Assets | Hay que desplegar `wwwroot/` junto al `.exe` | `dotnet run` los resuelve desde `obj/` |
 | Raíces de rutas | `AppContext.BaseDirectory`, no el CWD del SCM | igual |
 | Cortafuegos | `8090`/puerto elegido probablemente cerrado en un servidor | sin restricciones |
-| Prueba de humo desde otro equipo | no aplica | `curl http://127.0.0.1:8080/_framework/blazor.web.js` ⇒ `200` |
+| Prueba de humo desde otro equipo | no aplica | `curl http://127.0.0.1:8888/_framework/blazor.web.js` ⇒ `200` |
 
 Detalle completo de la UI en [`web-ui.md`](web-ui.md).

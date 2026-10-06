@@ -64,7 +64,7 @@ public static class HostingLoggingExtensions
         if (HostingModeResolver.UsesEventLog(mode))
         {
             // Guarda explícita, y no sólo el análisis: el provider de Event Log lanza
-            // PlatformNotSupportedException en Linux/macOS. El modo servicio nunca debería
+            // PlatformNotSupportedException fuera de Windows. El modo servicio nunca debería
             // ocurrir ahí (HostingModeResolver degrada a consola), pero si alguien fuerza
             // 'Hosting:Mode=WindowsService' en Linux el proceso debe arrancar y loguear a
             // archivo, no morir con una excepción de plataforma.

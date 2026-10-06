@@ -97,7 +97,7 @@ El nombre del archivo se sanea en el servidor (`Path.GetFileName` + recorte de s
 | Clave | Por defecto | Para qué |
 |-------|-------------|----------|
 | `Enabled` | `true` | Si es `false` no se mapea la UI; el SMTP sigue funcionando |
-| `Port` | `8080` | Puerto HTTP; `0` pide uno efímero y el log dice cuál se acabó usando |
+| `Port` | `8888` | Puerto HTTP; `0` pide uno efímero y el log dice cuál se acabó usando |
 | `BindAddress` | `127.0.0.1` | Literal IPv4/IPv6; fuera de loopback ⇒ warning en el log (no hay autenticación) |
 | `DefaultPageSize` | `50` | Filas por página por defecto |
 | `MaxPageSize` | `200` | Tope del selector de filas por página |
@@ -131,7 +131,7 @@ ningún botón responde. Por eso `SmtpMockup.Host.csproj` fija:
 ```
 
 Es un fallo silencioso y desconcertante; la prueba de humo es
-`curl -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/_framework/blazor.web.js` ⇒ `200`.
+`curl -o /dev/null -w '%{http_code}' http://127.0.0.1:8888/_framework/blazor.web.js` ⇒ `200`.
 
 ## Pruebas
 

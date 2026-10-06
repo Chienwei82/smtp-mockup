@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- PfxKeyStorage es internal y sus tests son los que fijan el comportamiento en macOS. -->
+    <!-- PfxKeyStorage es internal; sus tests fijan el comportamiento en cada plataforma. -->
     <InternalsVisibleTo Include="SmtpMockup.Smtp.Tests" />
   </ItemGroup>
 

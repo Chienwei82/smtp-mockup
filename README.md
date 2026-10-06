@@ -7,7 +7,7 @@ que se actualiza sola. Un solo proceso, un solo ejecutable, sin dependencias nat
 - **SMTP en claro** en `127.0.0.1:8025` (sin credenciales, sin cifrar).
 - **SMTP con STARTTLS** en `127.0.0.1:8443`; el certificado autofirmado se genera solo la primera
   vez y se persiste.
-- **UI web** en `http://127.0.0.1:8080/`: listado, filtros, detalle con cuerpos y adjuntos,
+- **UI web** en `http://127.0.0.1:8888/`: listado, filtros, detalle con cuerpos y adjuntos,
   descargas y borrado.
 - Persistencia en archivos JSON particionados por día, junto al ejecutable (`data/messages/`).
 
@@ -20,7 +20,7 @@ conexiones SMTP salientes). Es una herramienta local de desarrollo.
 |---|---|
 | Para compilar desde el código | **.NET SDK 10** (verificado con 10.0.112) |
 | Para usar el binario publicado | ninguno: es *self-contained* |
-| Plataformas | Windows, Linux, macOS (sin dependencias nativas) |
+| Plataformas | Windows y Linux (sin dependencias nativas) |
 
 ## Arranque rápido
 
@@ -33,20 +33,20 @@ dotnet run --project src/SmtpMockup.Host
 Desde un binario publicado:
 
 ```bash
-./smtp-mockup                     # Linux / macOS
+./smtp-mockup                     # Linux
 smtp-mockup.exe                   # Windows
 ```
 
 Con los valores por defecto quedan escuchando `127.0.0.1:8025` (SMTP en claro),
-`127.0.0.1:8443` (STARTTLS) y `127.0.0.1:8080` (la UI). Las primeras líneas del log dicen el modo
+`127.0.0.1:8443` (STARTTLS) y `127.0.0.1:8888` (la UI). Las primeras líneas del log dicen el modo
 de ejecución, los puertos y dónde se escribe:
 
 ```
 info: SmtpMockup.Startup[0] Running as Console (configured Hosting:Mode=Auto, started by SCM=False); …
 info: SmtpMockup.Startup[0] SMTP listeners configured: plain=True on 127.0.0.1:8025, secure=True on 127.0.0.1:8443 (security=StartTls, max 25 MB)
 info: SmtpMockup.Smtp.SmtpListenerService[0] SMTP listener started kind=Plain endpoint=127.0.0.1:8025 security=None maxMessageSizeBytes=26214400 certificate=(none)
-info: SmtpMockup.Startup[0] Web UI configured on http://127.0.0.1:8080
-info: Microsoft.Hosting.Lifetime[14] Now listening on: http://127.0.0.1:8080
+info: SmtpMockup.Startup[0] Web UI configured on http://127.0.0.1:8888
+info: Microsoft.Hosting.Lifetime[14] Now listening on: http://127.0.0.1:8888
 ```
 
 ## Configuración
@@ -102,7 +102,7 @@ Smtp__Plain__Port=9325 Smtp__StartTls__Enabled=false Web__Port=9380 ./smtp-mocku
 | `Storage:MaxRawMimeBytes` | `10485760` | Tope del MIME crudo (`0` = sin tope) |
 | `Storage:WriteIndented` | `true` | JSON con sangría |
 | `Web:Enabled` | `true` | Si es `false` no hay UI, pero el SMTP sigue |
-| `Web:Port` | `8080` | Puerto HTTP (`0` = efímero) |
+| `Web:Port` | `8888` | Puerto HTTP (`0` = efímero) |
 | `Web:BindAddress` | `127.0.0.1` | Fuera de loopback ⇒ aviso en el log (no hay auth) |
 | `Web:Title` | `smtp-mockup` | Título del navegador y de la barra superior |
 | `Web:DefaultPageSize` | `50` | Filas por página |
@@ -263,9 +263,27 @@ s.sendmail('dev@example.com', ['destino@example.com'],
 s.quit()
 ```
 
+### Tres correos con historias generadas (`scripts/`)
+
+El repositorio trae dos scripts de Python, sin dependencias (sólo la biblioteca estándar), que mandan
+al mockup **tres correos distintos**, cada uno con una historia clásica y graciosa generada al azar
+(una fábula, un cuento de tres y un chiste). Prueban, de paso, las tres formas del mismo mensaje: sólo
+texto, texto + HTML, y texto + HTML con un adjunto `.txt`.
+
+```bash
+python3 scripts/send_story_mails.py              # 127.0.0.1:8025, en claro
+python3 scripts/send_story_mails.py --starttls    # 127.0.0.1:8443, con STARTTLS
+python3 scripts/send_story_mails.py --dry-run     # genera y no envía
+python3 scripts/mockup_mailer.py --seed 7 --html  # sólo previsualizar las historias
+```
+
+`scripts/mockup_mailer.py` es el módulo (cliente SMTP y generador de historias, con una herramienta de
+previsualización) y `scripts/send_story_mails.py` es el que envía. Verificado contra el binario
+publicado: los tres mensajes se aceptan con `250` y aparecen en la UI.
+
 ## Abrir la UI
 
-Con el proceso corriendo, en <http://127.0.0.1:8080/>:
+Con el proceso corriendo, en <http://127.0.0.1:8888/>:
 
 | Ruta | Contenido |
 |---|---|
@@ -298,7 +316,7 @@ El nombre del archivo es un ULID (ordenable por tiempo) dentro de una carpeta po
 el sobre (`envelope` con IP y puerto remoto, `MAIL FROM`, `RCPT TO`, transporte y TLS), las
 direcciones (`from`/`to`/`cc`/`bcc`, con el **Bcc recuperado del sobre**), los cuerpos de texto y
 HTML, los adjuntos con su SHA-256 y el MIME original en base64. El esquema completo está en
-[`memory-bank/apiReference.md`](memory-bank/apiReference.md).
+[`SPEC.md` §7](SPEC.md).
 
 Los archivos se pueden leer, editar o borrar a mano: la UI se entera sola.
 
@@ -324,10 +342,22 @@ Un detalle que el script respeta por ti: al refrescar un RID **no borra `data/`,
 `logs/`**, porque ahí están los correos que le has mandado y el PFX autofirmado. Se borran sólo con
 `--clean-data`.
 
+Si quieres publicar dejando ya fijados los puertos y el TLS, hay una variante interactiva:
+
+```bash
+python3 scripts/publish-with-config.py            # pregunta: ¿TLS? ¿puertos por defecto o nuevos?
+python3 scripts/publish-with-config.py --yes       # sin preguntar (TLS no, puertos por defecto)
+python3 scripts/publish-with-config.py --zip       # además, un .zip con esa config dentro
+```
+
+Escribe la respuesta en el `appsettings.json` **publicado** (nunca en el del repo), así que el binario
+—y el `.zip`, si pides `--zip`— arranca ya con ella. Imprime además los argumentos equivalentes
+(`--Smtp:Plain:Port=…`, `--Web:Port=…`) por si prefieres pasarlos al ejecutable en vez de editar el JSON.
+
 Si prefieres hacerlo a mano (o no tienes Python):
 
 ```bash
-# Linux / macOS
+# Linux
 dotnet publish src/SmtpMockup.Host -c Release -r linux-x64 --self-contained \
   -p:PublishSingleFile=true -p:PublishTrimmed=false -o publish/linux-x64
 
@@ -350,7 +380,7 @@ Sin el script, a mano:
 cd publish/win-x64 && zip -r smtp-mockup-win-x64.zip smtp-mockup.exe wwwroot appsettings.json
 ```
 
-> Al descomprimir en Linux o macOS el binario puede salir sin permiso de ejecución (según cómo
+> Al descomprimir en Linux el binario puede salir sin permiso de ejecución (según cómo
 > extraiga tu herramienta): `chmod +x smtp-mockup`.
 
 Notas:
@@ -359,7 +389,7 @@ Notas:
   rompe en runtime, no al compilar.
 - No hace falta `PublishSingleFile` si preferís DLLs sueltas, pero **`wwwroot` sigue siendo
   obligatorio**.
-- Cero dependencias nativas: el mismo publish vale para Windows, Linux y macOS usando su RID.
+- Cero dependencias nativas: el mismo publish vale para Windows y Linux usando su RID.
 - `publish/` está en `.gitignore` y no se versiona: son ~57 MB de binario por RID.
 
 ## Integración continua
@@ -369,11 +399,11 @@ PR** y en cada push a `main`, y hace dos cosas:
 
 | Job | Qué hace |
 |---|---|
-| `test (ubuntu/windows/macos)` | `dotnet restore` → `dotnet build -warnaserror` → suite completa en las tres plataformas |
-| `publish (linux-x64 / win-x64 / osx-arm64)` | Corre `scripts/publish.py --zip` en el runner de cada plataforma y sube el `.zip` como artefacto de la corrida |
+| `test (ubuntu/windows)` | `dotnet restore` → `dotnet build -warnaserror` → suite completa en las dos plataformas |
+| `publish (linux-x64 / win-x64)` | Corre `scripts/publish.py --zip` en el runner de cada plataforma y sube el `.zip` como artefacto de la corrida |
 
 No hay despliegue a ningún sitio: nada se publica en un servidor, solo se generan los zips. Cada
-PR da tres zips descargables desde la pestaña **Artifacts**, uno por plataforma.
+PR da dos zips descargables desde la pestaña **Artifacts**, uno por plataforma.
 
 Tres detalles del workflow que no son obvios:
 
@@ -535,14 +565,12 @@ pwsh -File scripts/ServiceImagePath.Tests.ps1           # 14 casos de los script
    cualquier otro `if` nuevo en `Program.cs` volverá a estar sin cubrir.
 3. **No hay E2E de la UI con navegador.** Los criterios 9 y 10 están cubiertos a nivel de componente
    (bUnit), no de punta a punta. Un Playwright sobre el binario publicado cerraría el círculo.
-4. **No hay CI.** Nada corre los tests automáticamente: `restore → build -warnaserror → test` en
-   Linux/Windows/macOS, más un `publish` que verifique `wwwroot/_framework`.
-5. **`envelope.helo` es siempre `null`** (la librería no expone el dominio EHLO/HELO). El campo
+4. **`envelope.helo` es siempre `null`** (la librería no expone el dominio EHLO/HELO). El campo
    existe y es nullable, y nada depende de él todavía.
 
 ## Deuda técnica
 
-Ordenada por lo que cuesta más si se deja para mañana. Los tres primeros son los que importan.
+Ordenada por lo que cuesta más si se deja para mañana. Los dos primeros son los que importan.
 
 > **Lo que ya se arregló en la revisión de código** (y por qué no aparece aquí): `Smtp:Plain:Enabled=false`
 > no desactivaba el listener en claro (criterio 3 de §11.1); `size.bodyBytes` contaba caracteres en vez
@@ -562,45 +590,39 @@ abre (servicios, listeners, URLs) sigue dependiendo de revisión manual. Un `Web
 puertos efímeros que compruebe qué queda escuchando cerraría el hueco de raíz, y es lo que faltó
 para que el bug de `Smtp:Plain:Enabled` pasara inadvertido.
 
-### 3. Sin CI 🟡
-
-No hay workflow: nada impide mergear con la suite en rojo. El plan ya está escrito en
-`memory-bank/techContext.md`: `restore → build -warnaserror → test` en las tres plataformas, más un
-job de `publish` que falle si el artifact no trae `wwwroot/_framework`.
-
-### 4. `envelope.helo` siempre `null` 🟢
+### 3. `envelope.helo` siempre `null` 🟢
 
 La librería SMTP no expone el dominio de EHLO/HELO. El campo queda en el esquema y es nullable; si
 alguna vez hace falta, hay que subirlo por el cable (`Server.OnHeloReceived`) o sacarlo del primer
 header `Received`.
 
-### 5. Nombre del valor de transporte 🟢
+### 4. Nombre del valor de transporte 🟢
 
 El JSON escribe `"transport": "startTls"` mientras que SPEC §11.1 habla de `"StartTls"`. No rompe
 nada (nadie lo compara), pero es una discrepancia entre el documento y el dato persistido que va a
 confundir a quien lo lea.
 
-### 6. Publicación de Linux sin perfil 🟢
+### 5. Publicación de Linux sin perfil 🟢
 
 Sólo hay `.pubxml` para `win-x64`; el publish de Linux hay que hacerlo con los flags a mano (el
 comando está documentado más arriba). Con un `linux-x64.pubxml` los dos serían simétricos.
 
-### 7. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
+### 6. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
 
 SPEC §11.3 (criterio 19) los menciona. Ahora hay **un** script, `scripts/publish.py`, que hace
-compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las tres plataformas.
+compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las dos plataformas.
 
 No se hicieron dos scripts (`publish.ps1` + `publish.sh`) a propósito: dos copias de la misma
 lógica se divergen el día que hay que tocar una, y en PowerShell además habría que arrastrar el
 módulo de pruebas de parsing que ya existe para los scripts de servicio. Un script en Python cubre
-Windows, Linux y macOS sin duplicar nada. La SPEC se actualizó en vez de dejar el nombre literal.
+Windows y Linux sin duplicar nada. La SPEC se actualizó en vez de dejar el nombre literal.
 
 Cerrado además el punto que quedaba abierto de verdad: el zip se **verifica** después de
 escribirse (que lleve el ejecutable, `wwwroot/_framework/blazor.web.js` y `appsettings.json`, y que
 **no** se lleve `data/`, `certs/` ni `logs/`). Verificado descomprimiendo el zip en `/tmp` y
 arrancando desde ahí: UI en 200, estáticos en 200 y correo aceptado.
 
-### 8. ~~Todo el trabajo está sin commitear~~ ✅ resuelto
+### 7. ~~Todo el trabajo está sin commitear~~ ✅ resuelto
 
 Estaba todo sin trackear sobre un único commit de documentación. El proyecto está en GitHub con la
 implementación, la documentación y los scripts versionados.
@@ -625,23 +647,21 @@ El resto de la lista, por valor:
 
 1. **Tests directos de `FileSystemMessageStore`** (la deuda #1) y un test de arranque del Host con
    puertos efímeros (la #2). Es lo único que bloquea de verdad.
-2. **CI**: un `.github/workflows/ci.yml` con `restore → build -warnaserror → test` en
-   Linux/Windows/macOS, más el job de `publish` que verifique `wwwroot/_framework`.
-3. **Retención automática (TTL).** `Hosting:LogRetentionDays` ya poda los logs; los mensajes se
+2. **Retención automática (TTL).** `Hosting:LogRetentionDays` ya poda los logs; los mensajes se
    acumulan sin límite. Sería `Storage:RetentionDays` con una poda periódica.
-4. **Borrado con papelera.** Hoy el borrado es duro (se borra el archivo). Un `Storage:SoftDelete`
+3. **Borrado con papelera.** Hoy el borrado es duro (se borra el archivo). Un `Storage:SoftDelete`
    evitaría el «lo borré sin querer» con poco trabajo.
-5. **Búsqueda por texto completo.** El `search` actual mira asunto, remitente y destinatario con
+4. **Búsqueda por texto completo.** El `search` actual mira asunto, remitente y destinatario con
    `Contains`; un índice invertido sobre las cabeceras daría coincidencias parciales de verdad.
-6. **Adjuntos grandes fuera del JSON.** Hoy un adjunto de más de 4 MB queda `omitted: true` y no se
+5. **Adjuntos grandes fuera del JSON.** Hoy un adjunto de más de 4 MB queda `omitted: true` y no se
    puede descargar. Guardarlo como archivo suelto junto al JSON (el hash como nombre) elimina ese
    techo sin cambiar el esquema.
-7. **Límite de conexiones simultáneas.** El RNF-02 lo pide, pero `SmtpServer` 11.1.0 no expone
+6. **Límite de conexiones simultáneas.** El RNF-02 lo pide, pero `SmtpServer` 11.1.0 no expone
    ninguna opción de concurrencia (`MaxRetryCount`, `MaxAuthenticationAttempts` y `MaxMessageSize`
    es lo más cercano), así que habría que hacerlo en casa sobre `IServer`'s o cambiar de librería.
    La clave `MaxConcurrentConnections` se retiró de la SPEC y de `appsettings.json` en lugar de
    dejar una opción que no hace nada.
-8. **Tope de circuitos de Blazor.** Con muchas pestañas abiertas los circuitos se acumulan; conviene
+7. **Tope de circuitos de Blazor.** Con muchas pestañas abiertas los circuitos se acumulan; conviene
    un `CircuitOptions` con un límite por cliente.
 
 ## Documentos del repositorio
@@ -653,7 +673,6 @@ El resto de la lista, por valor:
 | [`docs/web-ui.md`](docs/web-ui.md) | Cómo funciona la UI, actualización en vivo, constraints de publicación |
 | [`docs/hosting-modes.md`](docs/hosting-modes.md) | Consola vs servicio, publicación, permisos, operación |
 | [`docs/certificate-trust.md`](docs/certificate-trust.md) | Cómo confiar el certificado en Windows y en Linux |
-| `memory-bank/` | Contexto del proyecto para el trabajo futuro |
 
 ## Licencia
 

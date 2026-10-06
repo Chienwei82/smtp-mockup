@@ -114,7 +114,7 @@ public sealed class OptionsBindingTests
         Assert.Equal(CertificateMode.Auto, options.Certificate.ParsedMode);
         Assert.True(options.Certificate.AutoGenerateSelfSigned);
         Assert.Equal("data/messages", options.Storage.Directory);
-        Assert.Equal(8080, options.Web.Port);
+        Assert.Equal(8888, options.Web.Port);
         Assert.Equal("127.0.0.1", options.Web.BindAddress);
     }
 

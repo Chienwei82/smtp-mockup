@@ -62,8 +62,8 @@ public static class SelfSignedCertificateFactory
         // El certificado se serializa a PFX y se relee: CreateSelfSigned devuelve un objeto que
         // no siempre expone la clave privada de forma utilizable con el almacén de claves, y lo
         // que necesita el servidor es un X509Certificate2 importable y reexportable.
-        // Los flags son PfxKeyStorage.Flags y no unos literales porque macOS no admite claves
-        // efímeras (ver PfxKeyStorage).
+        // Los flags son PfxKeyStorage.Flags y no unos literales porque no son los mismos en todas
+        // las plataformas (ver PfxKeyStorage).
         using var generated = request.CreateSelfSigned(now, now.AddDays(validityDays));
 
         return X509CertificateLoader.LoadPkcs12(
