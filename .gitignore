@@ -3,7 +3,8 @@
 ## .NET 10 / C# 14 / Visual Studio / JetBrains
 ## ============================================================
 
-# ---- Memory bank (documentación de sesión, no versionar) ----
+# ---- Memory bank (scratch local del agente; no es parte del repo) ----
+# No se versiona a propósito: es documentación de sesión y no debe faltar en un clon limpio.
 memory-bank/
 *.md.APPEND-MARKER
 
