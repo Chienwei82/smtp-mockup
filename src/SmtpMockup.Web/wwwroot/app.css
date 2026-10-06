@@ -1,13 +1,94 @@
 /*
-  Estilos mínimos de la UI. El tema y los componentes vienen de MudBlazor
-  (_content/MudBlazor/MudBlazor.min.css); aquí sólo está lo que la app necesita
-  y MudBlazor no cubre. Si este archivo falta en la publicación, la UI funciona
-  pero sin los ajustes de scroll y de la tabla.
+  Sistema visual de la UI — Material You dark.
+
+  Los tokens (--md-*) son los de docs/UI-Prototype/index.html tal cual: si un color, radio o
+  curva de animación cambia, cambia en el export y aquí a la vez. El tema de MudBlazor
+  (Theme/MockupTheme.cs) pinta los controles que dibuja la librería; este fichero añade las
+  piezas del export que MudBlazor no trae (barra superior, nav rail, bottom nav, tarjetas,
+  snackbar) y ajusta las clases de MudBlazor al aspecto del prototipo.
+
+  Sin este fichero la UI funciona, pero con el tema por defecto de MudBlazor.
 */
 
-html, body {
+:root {
+    color-scheme: dark;
+
+    /* M3 Dark Theme — Teal / Blue tonal palette (igual que el export) */
+    --md-primary: #4DD0E1;
+    --md-on-primary: #00363A;
+    --md-primary-container: #004D54;
+    --md-on-primary-container: #6FF7FF;
+
+    --md-secondary: #80CBC4;
+    --md-on-secondary: #003731;
+    --md-secondary-container: #005048;
+    --md-on-secondary-container: #A0F0E7;
+
+    --md-tertiary: #80CBF4;
+    --md-on-tertiary: #00344F;
+    --md-tertiary-container: #004B72;
+    --md-on-tertiary-container: #BEE6FF;
+
+    --md-error: #FFB4AB;
+    --md-on-error: #690005;
+    --md-success: #81C784;
+    --md-error-subtle: #EF9A9A;
+    /* El export no define rol warning; ámbar añadido para los estados de aviso. */
+    --md-warning: #FFCF66;
+
+    --md-surface: #111318;
+    --md-surface-dim: #111318;
+    --md-surface-bright: #37393E;
+    --md-on-surface: #E2E2E9;
+    --md-on-surface-variant: #C3C6CF;
+    --md-outline: #8D9199;
+    --md-outline-variant: #43474E;
+
+    --md-surface-container-lowest: #0B0D11;
+    --md-surface-container-low: #191C20;
+    --md-surface-container: #1D2024;
+    --md-surface-container-high: #282A2E;
+    --md-surface-container-highest: #333539;
+
+    /* Elevation overlays */
+    --md-elevation-1: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15);
+    --md-elevation-2: 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15);
+    --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.3);
+
+    /* Motion */
+    --md-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --md-motion-duration-short: 200ms;
+    --md-motion-duration-medium: 400ms;
+
+    /* Shape */
+    --md-shape-xs: 4px;
+    --md-shape-sm: 8px;
+    --md-shape-md: 12px;
+    --md-shape-lg: 16px;
+    --md-shape-xl: 28px;
+    --md-shape-full: 9999px;
+
+    /* Type — Inter (la escala numérica la aplica MockupTheme a MudBlazor) */
+    --md-font-family: 'Inter', system-ui, sans-serif;
+    --md-type-display: 700 2.5rem/1.15 var(--md-font-family);
+    --md-type-headline: 600 2rem/1.25 var(--md-font-family);
+    --md-type-title: 600 1.125rem/1.4 var(--md-font-family);
+    --md-type-body: 400 0.9375rem/1.6 var(--md-font-family);
+    --md-type-label: 500 0.8125rem/1.4 var(--md-font-family);
+    --md-type-label-sm: 500 0.6875rem/1.4 var(--md-font-family);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
     margin: 0;
-    font-family: var(--mud-typography-body1-family, system-ui, sans-serif);
+    background: var(--md-surface);
+    color: var(--md-on-surface);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Los correos largos (textos sin saltos, HTML) revientan cualquier tabla. */
@@ -16,13 +97,403 @@ table {
     word-break: break-word;
 }
 
-/* La lista puede tener cientos de filas: el scroll va en la página, no en la tabla. */
-.mud-table-container {
-    overflow-x: auto;
+code, pre {
+    font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', monospace;
+    font-size: .8125rem;
 }
+
+/* ─── Focus visible: siempre visible, con el acento del tema ─── */
+:focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+    border-radius: var(--md-shape-xs);
+}
+
+.skip-link {
+    position: absolute;
+    left: 16px;
+    top: -48px;
+    z-index: 300;
+    padding: 10px 16px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-primary);
+    color: var(--md-on-primary);
+    font: var(--md-type-label);
+    text-decoration: none;
+    transition: top var(--md-motion-duration-short) var(--md-motion-standard);
+}
+.skip-link:focus-visible { top: 12px; }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: var(--md-shape-full); }
+
+/* ─── Top App Bar (igual que el export) ─── */
+.top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 64px;
+    padding: 0 16px;
+    background: var(--md-surface-container);
+    border-bottom: 1px solid var(--md-outline-variant);
+    transition: box-shadow var(--md-motion-duration-short) var(--md-motion-standard);
+}
+
+.top-bar__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.top-bar__icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--md-shape-md);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+}
+
+.top-bar__title {
+    font: var(--md-type-title);
+    color: var(--md-primary);
+    letter-spacing: -.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.top-bar__spacer { flex: 1; }
+
+/* ─── Layout: nav rail + contenido ─── */
+.shell { display: flex; min-height: calc(100vh - 64px); }
+
+.nav-rail {
+    position: sticky;
+    top: 64px;
+    align-self: flex-start;
+    width: 80px;
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    background: var(--md-surface);
+    border-right: 1px solid var(--md-outline-variant);
+    overflow-y: auto;
+    z-index: 1;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    width: 100%;
+    text-decoration: none;
+    color: var(--md-on-surface-variant);
+    font: var(--md-type-label-sm);
+    letter-spacing: .02em;
+    cursor: pointer;
+    transition: color var(--md-motion-duration-short) var(--md-motion-standard);
+}
+
+.nav-item__icon-wrap {
+    width: 56px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--md-shape-full);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                color var(--md-motion-duration-short) var(--md-motion-standard);
+}
+
+.nav-item:hover .nav-item__icon-wrap { background: rgba(227,226,233,.08); }
+.nav-item.active { color: var(--md-on-surface); }
+.nav-item.active .nav-item__icon-wrap {
+    background: transparent;
+    color: var(--md-on-secondary-container);
+    box-shadow: 0 0 6px 1px rgba(77,208,225,.3), 0 0 12px 2px rgba(77,208,225,.12);
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    padding: 24px 32px 80px;
+    max-width: 1200px;
+}
+.main:focus-visible { outline-offset: -2px; }
+
+/* ─── Bottom Nav (móvil) ─── */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: var(--md-surface-container);
+    border-top: 1px solid var(--md-outline-variant);
+    z-index: 100;
+    padding: 0 8px;
+}
+
+.bottom-nav__items {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--md-on-surface-variant);
+    font: var(--md-type-label-sm);
+    letter-spacing: .02em;
+    cursor: pointer;
+    padding: 12px 0 16px;
+}
+
+.bottom-nav__item-icon {
+    width: 64px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--md-shape-full);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+}
+
+.bottom-nav__item.active { color: var(--md-on-surface); }
+.bottom-nav__item.active .bottom-nav__item-icon {
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+}
+
+/* ─── Botones: el .btn del export sobre las clases de MudBlazor ─── */
+.mud-button-root {
+    border-radius: var(--md-shape-full) !important;
+    letter-spacing: .02em;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                box-shadow var(--md-motion-duration-short) var(--md-motion-standard);
+}
+
+.mud-button-filled.mud-button-color-primary {
+    background-color: var(--md-primary);
+    color: var(--md-on-primary);
+    box-shadow: var(--md-elevation-1);
+}
+.mud-button-filled.mud-button-color-primary:hover {
+    box-shadow: var(--md-elevation-2);
+    background-color: color-mix(in srgb, var(--md-primary), #fff 8%);
+}
+
+.mud-button-filled.mud-button-color-error {
+    background-color: var(--md-error);
+    color: var(--md-on-error);
+    box-shadow: var(--md-elevation-1);
+}
+
+.mud-button-outlined {
+    border-color: var(--md-outline);
+}
+.mud-button-outlined.mud-button-color-primary,
+.mud-button-outlined.mud-button-color-error:hover { background: transparent; }
+.mud-button-outlined:hover { background: rgba(77,208,225,.08); }
+
+.mud-button-text:hover { background: rgba(77,208,225,.08); }
+
+.mud-button-root:disabled,
+.mud-button-root[disabled] {
+    opacity: .38;
+    box-shadow: none;
+}
+
+.mud-icon-button-root {
+    border-radius: var(--md-shape-full);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+}
+.mud-icon-button-root:hover { background: rgba(227,226,233,.08); }
+
+/* ─── Chips: el .chip del export ─── */
+.mud-chip {
+    border-radius: var(--md-shape-sm);
+    border: 1px solid var(--md-outline-variant);
+    font: var(--md-type-label);
+    letter-spacing: .02em;
+}
+
+/* ─── Paneles y tarjetas ─── */
+.mud-paper {
+    border-radius: var(--md-shape-lg);
+    border: 1px solid var(--md-outline-variant);
+    background: var(--md-surface-container);
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    padding: 24px;
+    transition: border-color var(--md-motion-duration-short) var(--md-motion-standard),
+                transform var(--md-motion-duration-short) var(--md-motion-standard),
+                box-shadow var(--md-motion-duration-short) var(--md-motion-standard);
+}
+.stat-card:hover {
+    border-color: var(--md-outline);
+    transform: translateY(-2px);
+    box-shadow: var(--md-elevation-2);
+}
+
+.stat-card__label {
+    font: var(--md-type-label);
+    color: var(--md-on-surface-variant);
+    letter-spacing: .02em;
+    margin-bottom: 8px;
+}
+
+/* display 2.5rem del export: el dato grande de las tarjetas de estadísticas. */
+.stat-value {
+    font: var(--md-type-display);
+    letter-spacing: -.02em;
+    color: var(--md-on-surface);
+}
+
+.section-title {
+    font: var(--md-type-title);
+    color: var(--md-on-surface);
+    margin: 0 0 16px;
+}
+
+/* Grupo de filtros: fieldset sin caja, con la leyenda como título de sección. */
+.filters {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+.filters legend { padding: 0; }
+
+/* ─── Tablas ─── */
+/* La lista puede tener cientos de filas: el scroll va en la página, no en la tabla. */
+.mud-table-container { overflow-x: auto; }
+
+.mud-table-head .mud-table-cell {
+    font: var(--md-type-label);
+    color: var(--md-on-surface-variant);
+    letter-spacing: .02em;
+    border-bottom-color: var(--md-outline-variant);
+}
+
+.mud-table-row .mud-table-cell { border-bottom-color: var(--md-outline-variant); }
+.mud-table-row:hover { background: rgba(227,226,233,.08); }
+
+/* Celdas-etiqueta de las tablas de clave/valor (th scope="row"). */
+th[scope="row"] {
+    text-align: left;
+    font-weight: 600;
+    color: var(--md-on-surface-variant);
+    white-space: nowrap;
+    vertical-align: top;
+    padding: 8px 16px 8px 0;
+}
+
+td.num, th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─── Diálogo de confirmación (M3 dialog) ─── */
+.confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1400;
+    max-width: 32rem;
+    min-width: 20rem;
+    border-radius: var(--md-shape-xl);
+    background: var(--md-surface-container-high);
+    box-shadow: var(--md-elevation-3);
+}
+
+/* ─── Snackbar: el .snackbar del export sobre el proveedor de MudBlazor ─── */
+.mud-snackbar {
+    border-radius: var(--md-shape-sm);
+    background: var(--md-surface-container-highest);
+    color: var(--md-on-surface);
+    box-shadow: var(--md-elevation-3);
+    font: var(--md-type-body);
+}
+
+/* ─── Avisos y estados ─── */
+.mud-alert {
+    border-radius: var(--md-shape-md);
+    border: 1px solid var(--md-outline-variant);
+    background: var(--md-surface-container);
+}
+
+.mud-link { text-underline-offset: 2px; }
+
+/* ─── Inputs y pestañas ─── */
+.mud-input:focus-within .mud-input-underline::after,
+.mud-input.mud-focused .mud-input-underline::after {
+    border-bottom-color: var(--md-primary);
+}
+
+.mud-tabs-rounded > .mud-tabs-toolbar {
+    background: var(--md-surface-container);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-lg);
+}
+
+.mud-tab-slider { background-color: var(--md-primary); }
 
 /* El iframe del cuerpo HTML se estira al alto disponible de la pestaña. */
 iframe {
     border: 0;
     width: 100%;
 }
+
+/* ─── Responsive (umbrales del export: 768px y 480px) ─── */
+@media (max-width: 1024px) {
+    .main { padding: 24px 24px 80px; }
+}
+
+@media (max-width: 768px) {
+    .nav-rail { display: none; }
+    .bottom-nav { display: block; }
+    .main { padding: 16px 16px 100px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+        animation-delay: 0ms !important;
+    }
+    html { scroll-behavior: auto; }
+}
+
+

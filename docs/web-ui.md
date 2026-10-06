@@ -52,6 +52,34 @@ arrancar un servidor.
 - **Adjuntos**: nombre saneado, tipo, tamaño, SHA-256, marca de inline y de «no guardado»
   (`omitted: true`, cuando el adjunto supera `Storage:MaxInlineAttachmentBytes`).
 
+## Estilo visual y accesibilidad
+
+La UI adopta el estilo de `docs/UI-Prototype/` (Material You dark, teal/azul, Inter) como contrato
+visual; el detalle de normas está en `SPEC.md` §9.8. En la práctica:
+
+- **`Theme/MockupTheme.cs`** es el único sitio donde viven los colores, la escala tipográfica y los
+  radios que dibuja MudBlazor. **`wwwroot/app.css`** añade los tokens `--md-*` del export y las
+  piezas del prototipo que MudBlazor no trae (barra superior, nav rail, bottom nav, tarjetas de
+  estadísticas, snackbar, diálogo M3). Si el export cambia, cambian esos dos ficheros.
+- **Layout**: barra superior fija con la marca (`Web:Title`), nav rail de cuatro destinos en
+  escritorio y bottom nav en móvil (≤768px); el contenido va en `<main id="main-content">` con
+  ancho máximo 1200px. La navegación vive fuera del `MudAppBar` a propósito: dentro desbordaba
+  en pantallas estrechas.
+- **Tipografía**: Inter se pide a Google Fonts con `display=swap` y respaldo `system-ui`; sin red
+  la app cambia de familia pero no de escala (un mockup local no puede depender de la red).
+- **Accesibilidad**: un `<h1>` por página (que además da foco al `FocusOnNavigate` de
+  `Routes.razor`), skip link al contenido, landmarks etiquetados, tablas clave/valor con
+  `<th scope="row">`, `aria-label` en controles de icono y checkboxes, `aria-live="polite"` en el
+  resumen de resultados y la paginación, filtros en `fieldset`/`legend`, y diálogo de borrado con
+  `role="alertdialog"` + `aria-labelledby`/`aria-describedby` y foco inicial en «Cancelar».
+- **Movimiento**: `prefers-reduced-motion` apaga transiciones y animaciones.
+- **Estados de color**: success/error salen del export; el rol *warning* (ámbar) no existe en el
+  prototipo y se añadió para los avisos («sin TLS», «no guardado»).
+
+Está cubierto por `tests/SmtpMockup.Web.Tests/AccessibilityTests.cs`: landmarks, un solo `h1` por
+página, grupo de filtros con nombre, región viva del resumen y `th scope="row"` en el sobre.
+
+
 ## Actualización en vivo
 
 ```text
@@ -141,5 +169,7 @@ Es un fallo silencioso y desconcertante; la prueba de humo es
 - **Componentes (bUnit)**: el listado aplica filtros, se refresca sin recarga, pide confirmación
   antes de borrar y borra lo confirmado; el detalle muestra las seis pestañas, mete el HTML en el
   iframe sandbox, enlaza la descarga con el nombre saneado y avisa si el id de la ruta no es válido.
+- **Accesibilidad (bUnit)**: landmarks del layout y skip link, un solo `<h1>` por página, filtros
+  como grupo etiquetado, resumen de resultados como región viva y `th scope="row"` en el sobre.
 - `InvokeAsync` sin `StateHasChanged` es un fallo silencioso que ninguna prueba de markup detecta a
   simple vista: la prueba de «llega un mensaje con la lista abierta» lo cazó.

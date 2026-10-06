@@ -5,33 +5,27 @@
 
 <PageHeader Text="Estadísticas" />
 
-<MudText Typo="Typo.h5" Class="mb-4">Estadísticas</MudText>
+<MudText Typo="Typo.h1" Class="mb-4">Estadísticas</MudText>
 
-<MudGrid Class="mb-4">
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Mensajes almacenados</MudText>
-            <MudText Typo="Typo.h4" data-testid="total-count">@_total</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Con adjuntos</MudText>
-            <MudText Typo="Typo.h4" data-testid="with-attachments">@_withAttachments</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Tamaño total</MudText>
-            <MudText Typo="Typo.h4" data-testid="total-bytes">@AttachmentTable.FormatSize(_totalBytes)</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+<div class="stat-grid">
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Mensajes almacenados</div>
+        <div class="stat-value" data-testid="total-count">@_total</div>
+    </MudPaper>
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Con adjuntos</div>
+        <div class="stat-value" data-testid="with-attachments">@_withAttachments</div>
+    </MudPaper>
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Tamaño total</div>
+        <div class="stat-value" data-testid="total-bytes">@AttachmentTable.FormatSize(_totalBytes)</div>
+    </MudPaper>
+</div>
 
 <MudGrid>
     <MudItem xs="12" md="6">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">Por día</MudText>
+        <MudPaper Class="pa-4" Elevation="0">
+            <MudText Typo="Typo.h2" Class="section-title">Por día</MudText>
             @if (_byDay.Count == 0)
             {
                 <MudText Typo="Typo.body2">Sin datos todavía.</MudText>
@@ -42,7 +36,7 @@
                     <tbody>
                         @foreach (var entry in _byDay)
                         {
-                            <tr><td>@entry.Key</td><td style="text-align:right">@entry.Value</td></tr>
+                            <tr><th scope="row">@entry.Key</th><td class="num">@entry.Value</td></tr>
                         }
                     </tbody>
                 </MudSimpleTable>
@@ -50,8 +44,8 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12" md="6">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">Por dominio destinatario</MudText>
+        <MudPaper Class="pa-4" Elevation="0">
+            <MudText Typo="Typo.h2" Class="section-title">Por dominio destinatario</MudText>
             @if (_byDomain.Count == 0)
             {
                 <MudText Typo="Typo.body2">Sin datos todavía.</MudText>
@@ -62,7 +56,7 @@
                     <tbody>
                         @foreach (var entry in _byDomain)
                         {
-                            <tr><td>@entry.Key</td><td style="text-align:right">@entry.Value</td></tr>
+                            <tr><th scope="row">@entry.Key</th><td class="num">@entry.Value</td></tr>
                         }
                     </tbody>
                 </MudSimpleTable>

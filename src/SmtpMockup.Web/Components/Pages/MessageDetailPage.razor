@@ -25,9 +25,11 @@ else
     <div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
         <div class="d-flex align-center gap-2">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Navigation.NavigateTo("/"))"
-                           aria-label="Volver" data-testid="back" />
+                           aria-label="Volver al listado" data-testid="back" />
             <div>
-                <MudText Typo="Typo.h5" data-testid="detail-subject">
+                @* Asunto como <h1> de la página: es su título. Con h1 real el FocusOnNavigate de
+                   Routes.razor enfoca el asunto al entrar desde el listado. *@
+                <MudText Typo="Typo.h1" data-testid="detail-subject">
                     @SubjectDecoder.ForDisplay(_message.Subject)
                 </MudText>
                 <MudText Typo="Typo.body2">
@@ -45,38 +47,38 @@ else
         <MudTabPanel Text="Resumen" Icon="@Icons.Material.Filled.Subject">
             <MudSimpleTable Dense="true" Hover="true" Elevation="0" data-testid="envelope">
                 <tbody>
-                    <tr><td><strong>De</strong></td><td>@FormatAddresses(_message.From)</td></tr>
-                    <tr><td><strong>Para</strong></td><td>@FormatAddresses(_message.To)</td></tr>
+                    <tr><th scope="row">De</th><td>@FormatAddresses(_message.From)</td></tr>
+                    <tr><th scope="row">Para</th><td>@FormatAddresses(_message.To)</td></tr>
                     @if (_message.Cc.Count > 0)
                     {
-                        <tr><td><strong>Cc</strong></td><td>@FormatAddresses(_message.Cc)</td></tr>
+                        <tr><th scope="row">Cc</th><td>@FormatAddresses(_message.Cc)</td></tr>
                     }
                     @if (_message.Bcc.Count > 0)
                     {
-                        <tr><td><strong>Bcc (del sobre)</strong></td><td>@FormatAddresses(_message.Bcc)</td></tr>
+                        <tr><th scope="row">Bcc (del sobre)</th><td>@FormatAddresses(_message.Bcc)</td></tr>
                     }
                     @if (_message.ReplyTo.Count > 0)
                     {
-                        <tr><td><strong>Responder a</strong></td><td>@FormatAddresses(_message.ReplyTo)</td></tr>
+                        <tr><th scope="row">Responder a</th><td>@FormatAddresses(_message.ReplyTo)</td></tr>
                     }
-                    <tr><td><strong>Asunto (crudo)</strong></td><td><code>@_message.Subject</code></td></tr>
-                    <tr><td><strong>Message-ID</strong></td><td><code>@_message.MessageId</code></td></tr>
+                    <tr><th scope="row">Asunto (crudo)</th><td><code>@_message.Subject</code></td></tr>
+                    <tr><th scope="row">Message-ID</th><td><code>@_message.MessageId</code></td></tr>
                     <tr>
-                        <td><strong>Fecha del cliente</strong></td>
+                        <th scope="row">Fecha del cliente</th>
                         <td>@(_message.SentDate?.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "(sin cabecera Date)")</td>
                     </tr>
-                    <tr><td><strong>Sobre: MAIL FROM</strong></td><td>@(_message.Envelope.MailFrom ?? "(null)")</td></tr>
+                    <tr><th scope="row">Sobre: MAIL FROM</th><td>@(_message.Envelope.MailFrom ?? "(null)")</td></tr>
                     <tr>
-                        <td><strong>Sobre: RCPT TO</strong></td>
+                        <th scope="row">Sobre: RCPT TO</th>
                         <td>@string.Join(", ", _message.Envelope.RecipientTo)</td>
                     </tr>
-                    <tr><td><strong>HELO</strong></td><td>@(_message.Envelope.Helo ?? "-")</td></tr>
+                    <tr><th scope="row">HELO</th><td>@(_message.Envelope.Helo ?? "-")</td></tr>
                     <tr>
-                        <td><strong>Origen</strong></td>
+                        <th scope="row">Origen</th>
                         <td>@_message.Envelope.RemoteIp:@_message.Envelope.RemotePort</td>
                     </tr>
                     <tr>
-                        <td><strong>Transporte</strong></td>
+                        <th scope="row">Transporte</th>
                         <td>
                             @_message.Envelope.Transport
                             @if (_message.Envelope.TlsNegotiated)
@@ -90,7 +92,7 @@ else
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>Tamaño</strong></td>
+                        <th scope="row">Tamaño</th>
                         <td>@_message.Size.TotalBytes bytes (cuerpo: @_message.Size.BodyBytes)</td>
                     </tr>
                 </tbody>
@@ -119,7 +121,7 @@ else
                     @foreach (var header in _message.Headers)
                     {
                         <tr>
-                            <td style="white-space:nowrap"><strong>@header.Name</strong></td>
+                            <th scope="row">@header.Name</th>
                             <td style="word-break:break-all"><code>@header.Value</code></td>
                         </tr>
                     }

@@ -1,30 +1,74 @@
 @inherits LayoutComponentBase
 @inject IOptions<WebOptions> WebOptions
 
-<MudThemeProvider />
+<MudThemeProvider Theme="@MockupTheme.Instance" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <MudAppBar Elevation="1" Dense="true">
-        <MudIcon Icon="@Icons.Material.Filled.Mail" Class="mr-2" />
-        <MudText Typo="Typo.h6">@Title</MudText>
-        <MudSpacer />
-        <MudNavMenu Bordered="true" Margin="Margin.Dense" Color="Color.Inherit">
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Inbox">Mensajes</MudNavLink>
-            <MudNavLink Href="stats" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.QueryStats">Estadísticas</MudNavLink>
-            <MudNavLink Href="settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">Estado</MudNavLink>
-            <MudNavLink Href="about" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Info">Acerca de</MudNavLink>
-        </MudNavMenu>
-    </MudAppBar>
+@* Primer foco de la página: con Tab se salta toda la navegación y se va directo al contenido. *@
+<a class="skip-link" href="#main-content">Saltar al contenido</a>
 
-    <MudMainContent Class="pt-6 pb-8">
-        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+@* Barra superior del export: marca configurable (Web:Title) y nada más; la navegación vive en el
+   nav rail, no aquí: meterla en la barra la dejaba ilegible en pantallas estrechas. *@
+<header class="top-bar">
+    <div class="top-bar__brand">
+        <span class="top-bar__icon" aria-hidden="true">
+            <MudIcon Icon="@Icons.Material.Filled.Mail" />
+        </span>
+        <span class="top-bar__title">@Title</span>
+    </div>
+    <div class="top-bar__spacer"></div>
+</header>
+
+<div class="shell">
+    <nav class="nav-rail" aria-label="Navegación principal">
+        <NavLink class="nav-item" href="" Match="NavLinkMatch.All">
+            <span class="nav-item__icon-wrap"><MudIcon Icon="@Icons.Material.Filled.Inbox" /></span>
+            Mensajes
+        </NavLink>
+        <NavLink class="nav-item" href="stats" Match="NavLinkMatch.Prefix">
+            <span class="nav-item__icon-wrap"><MudIcon Icon="@Icons.Material.Filled.QueryStats" /></span>
+            Estadísticas
+        </NavLink>
+        <NavLink class="nav-item" href="settings" Match="NavLinkMatch.Prefix">
+            <span class="nav-item__icon-wrap"><MudIcon Icon="@Icons.Material.Filled.Settings" /></span>
+            Estado
+        </NavLink>
+        <NavLink class="nav-item" href="about" Match="NavLinkMatch.Prefix">
+            <span class="nav-item__icon-wrap"><MudIcon Icon="@Icons.Material.Filled.Info" /></span>
+            Acerca de
+        </NavLink>
+    </nav>
+
+    @* tabindex=-1 para que el enlace «saltar al contenido» (y FocusOnNavigate) puedan enfocarlo. *@
+    <main id="main-content" class="main" tabindex="-1">
+        @Body
+    </main>
+</div>
+
+@* Bottom nav del export: es el mismo menú en móvil. La que no corresponde al ancho de pantalla va
+   con display:none, así que sólo una de las dos está en el árbol de accesibilidad. *@
+<nav class="bottom-nav" aria-label="Navegación principal">
+    <div class="bottom-nav__items">
+        <NavLink class="bottom-nav__item" href="" Match="NavLinkMatch.All">
+            <span class="bottom-nav__item-icon"><MudIcon Icon="@Icons.Material.Filled.Inbox" /></span>
+            Mensajes
+        </NavLink>
+        <NavLink class="bottom-nav__item" href="stats" Match="NavLinkMatch.Prefix">
+            <span class="bottom-nav__item-icon"><MudIcon Icon="@Icons.Material.Filled.QueryStats" /></span>
+            Estadísticas
+        </NavLink>
+        <NavLink class="bottom-nav__item" href="settings" Match="NavLinkMatch.Prefix">
+            <span class="bottom-nav__item-icon"><MudIcon Icon="@Icons.Material.Filled.Settings" /></span>
+            Estado
+        </NavLink>
+        <NavLink class="bottom-nav__item" href="about" Match="NavLinkMatch.Prefix">
+            <span class="bottom-nav__item-icon"><MudIcon Icon="@Icons.Material.Filled.Info" /></span>
+            Acerca de
+        </NavLink>
+    </div>
+</nav>
 
 @code {
     /// <summary>

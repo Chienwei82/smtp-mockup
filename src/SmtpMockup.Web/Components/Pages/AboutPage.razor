@@ -3,23 +3,23 @@
 
 <PageHeader Text="Acerca de" />
 
-<MudText Typo="Typo.h5" Class="mb-4">Acerca de smtp-mockup</MudText>
+<MudText Typo="Typo.h1" Class="mb-4">Acerca de smtp-mockup</MudText>
 
-<MudPaper Class="pa-4" Elevation="1">
+<MudPaper Class="pa-4" Elevation="0">
     <MudSimpleTable Dense="true" Elevation="0" data-testid="about">
         <tbody>
-            <tr><td><strong>Versión</strong></td><td>@Version</td></tr>
-            <tr><td><strong>Función</strong></td><td>Servidor SMTP local que guarda todo lo que recibe y lo muestra en esta UI</td></tr>
+            <tr><th scope="row">Versión</th><td>@Version</td></tr>
+            <tr><th scope="row">Función</th><td>Servidor SMTP local que guarda todo lo que recibe y lo muestra en esta UI</td></tr>
             <tr>
-                <td><strong>SMTP en claro</strong></td>
+                <th scope="row">SMTP en claro</th>
                 <td>@(_config.Smtp.Plain.Enabled ? EndpointAddress.FormatHostPort(_config.Smtp.Plain.BindAddress, _config.Smtp.Plain.Port) : "deshabilitado")</td>
             </tr>
             <tr>
-                <td><strong>SMTP STARTTLS</strong></td>
+                <th scope="row">SMTP STARTTLS</th>
                 <td>@(_config.Smtp.StartTls.Enabled ? $"{EndpointAddress.FormatHostPort(_config.Smtp.StartTls.BindAddress, _config.Smtp.StartTls.Port)} ({_config.Smtp.StartTls.Security})" : "deshabilitado")</td>
             </tr>
-            <tr><td><strong>UI</strong></td><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
-            <tr><td><strong>Autenticación</strong></td><td>ninguna, ni en SMTP ni en la UI: es una herramienta local</td></tr>
+            <tr><th scope="row">UI</th><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
+            <tr><th scope="row">Autenticación</th><td>ninguna, ni en SMTP ni en la UI: es una herramienta local</td></tr>
         </tbody>
     </MudSimpleTable>
 </MudPaper>

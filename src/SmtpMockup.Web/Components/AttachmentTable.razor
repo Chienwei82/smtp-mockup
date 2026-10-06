@@ -43,7 +43,8 @@ else
                 else
                 {
                     <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
-                               Href="@row.DownloadUrl" data-testid="download-attachment">
+                               Href="@row.DownloadUrl" aria-label="@($"Descargar {row.DisplayName}")"
+                               data-testid="download-attachment">
                         Descargar
                     </MudButton>
                 }
