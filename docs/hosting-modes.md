@@ -7,7 +7,7 @@ binarios ni un flag que mantener sincronizado: el proceso decide al arrancar (D-
 
 `Hosting:Mode` decide la política y el entorno decide el resultado:
 
-| `Hosting:Mode` | Windows, arrancado por el SCM | Windows, desde una terminal | Linux / macOS |
+| `Hosting:Mode` | Windows, arrancado por el SCM | Windows, desde una terminal | Linux |
 | --- | --- | --- | --- |
 | `Auto` (default) | Servicio | Consola | Consola |
 | `Console` | Consola + aviso por stderr | Consola | Consola |

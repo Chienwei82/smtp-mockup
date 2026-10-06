@@ -7,17 +7,13 @@ namespace SmtpMockup.Smtp.Tests;
 /// Tests de <see cref="PfxKeyStorage"/>: los flags con los que se carga cualquier PFX del proyecto.
 /// </summary>
 /// <remarks>
-/// Estos tests existen por dos bugs que solo se ven en CI, nunca en la máquina de desarrollo
-/// (Linux). Los dos tenían la misma raíz: pedir <c>EphemeralKeySet</c> en una plataforma donde no
-/// funciona.
-/// <list type="bullet">
-/// <item>macOS: <c>PlatformNotSupportedException</c> al cargar el PFX (15 tests y el arranque real).</item>
-/// <item>
-/// Windows: Schannel no usa claves efímeras en el handshake; el servidor corta la conexión y el
+/// Estos tests existen por un bug que solo se ve en CI, nunca en la máquina de desarrollo (Linux):
+/// pedir <c>EphemeralKeySet</c> en una plataforma donde no funciona.
+/// <para>
+/// En Windows, Schannel no usa claves efímeras en el handshake; el servidor corta la conexión y el
 /// cliente ve <c>SslHandshakeException</c> con un <c>unexpected EOF</c> dentro, cuyo mensaje habla
 /// de confianza del certificado y no señala la causa real.
-/// </item>
-/// </list>
+/// </para>
 /// La única plataforma que admite la clave efímera <i>y</i> la usa en el handshake es Linux.
 /// </remarks>
 public sealed class PfxKeyStorageTests
@@ -45,15 +41,14 @@ public sealed class PfxKeyStorageTests
     {
         // Sin Exportable el PFX no se puede volver a escribir ni recargar, y el arranque
         // contrario fallaría. Es el otro flag que los tres puntos de carga necesitan siempre,
-        // también en Windows y macOS.
+        // también en Windows.
         Assert.True(PfxKeyStorage.Flags.HasFlag(X509KeyStorageFlags.Exportable));
     }
 
     [Fact]
     public void Loading_and_exporting_a_certificate_works_on_this_platform()
     {
-        // El aserto real: hacer el viaje completo del PFX con los flags que el código usa. En macOS
-        // esto lanzaba PlatformNotSupportedException, que es como se encontró el bug.
+        // El aserto real: hacer el viaje completo del PFX con los flags que el código usa.
         using var key = RSA.Create(2048);
         var request = new CertificateRequest(
             "CN=smtp-mockup-test",

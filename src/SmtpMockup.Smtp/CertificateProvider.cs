@@ -220,8 +220,8 @@ public sealed class CertificateProvider(
                     continue;
                 }
 
-                // Se reexporta a PFX para devolver un certificado con clave privada usable y
-                // efímera (en macOS, efímera no es posible: ver PfxKeyStorage). Así el proceso
+                // Se reexporta a PFX para devolver un certificado con clave privada usable
+                // (efímera donde la plataforma lo permite: ver PfxKeyStorage). Así el proceso
                 // no deja restos de la clave en el almacén al cerrar.
                 return X509CertificateLoader.LoadPkcs12(
                     certificate.Export(X509ContentType.Pfx),

@@ -383,7 +383,7 @@ def host_rid() -> str:
     system = platform.system().lower()
     machine = platform.machine().lower()
 
-    os_part = {"windows": "win", "linux": "linux", "darwin": "osx"}.get(system, system)
+    os_part = {"windows": "win", "linux": "linux"}.get(system, system)
     arch = {
         "x86_64": "x64",
         "amd64": "x64",
@@ -684,7 +684,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--rid",
         action="append",
         metavar="RID",
-        help="RID a publicar, repetible (linux-x64, win-x64, osx-arm64...). "
+        help="RID a publicar, repetible (linux-x64, win-x64...). "
         "Por defecto: el del host y win-x64.",
     )
     parser.add_argument(
@@ -906,7 +906,7 @@ def main(argv: list[str] | None = None) -> int:
 
         step = StepLog()
         # Los flags van explicitos en vez de -p:PublishProfile=win-x64 a proposito: el
-        # .pubxml fija PublishDir con barras invertidas, que en Linux y macOS crean un
+        # .pubxml fija PublishDir con barras invertidas, que en Linux crean un
         # directorio literal en vez de publish/win-x64. Pasando -o el RID manda en todas
         # las plataformas, y asi el script no depende de un perfil que solo cubre Windows.
         result = run_dotnet(
@@ -994,7 +994,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         if any(not rid.startswith("win") for rid in rids):
             console.info(
-                "al descomprimir en Linux/macOS, el binario puede salir sin permiso de "
+                "al descomprimir en Linux, el binario puede salir sin permiso de "
                 "ejecucion: chmod +x smtp-mockup"
             )
     else:

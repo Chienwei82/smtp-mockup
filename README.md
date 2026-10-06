@@ -20,7 +20,7 @@ conexiones SMTP salientes). Es una herramienta local de desarrollo.
 |---|---|
 | Para compilar desde el código | **.NET SDK 10** (verificado con 10.0.112) |
 | Para usar el binario publicado | ninguno: es *self-contained* |
-| Plataformas | Windows, Linux, macOS (sin dependencias nativas) |
+| Plataformas | Windows y Linux (sin dependencias nativas) |
 
 ## Arranque rápido
 
@@ -33,7 +33,7 @@ dotnet run --project src/SmtpMockup.Host
 Desde un binario publicado:
 
 ```bash
-./smtp-mockup                     # Linux / macOS
+./smtp-mockup                     # Linux
 smtp-mockup.exe                   # Windows
 ```
 
@@ -357,7 +357,7 @@ Escribe la respuesta en el `appsettings.json` **publicado** (nunca en el del rep
 Si prefieres hacerlo a mano (o no tienes Python):
 
 ```bash
-# Linux / macOS
+# Linux
 dotnet publish src/SmtpMockup.Host -c Release -r linux-x64 --self-contained \
   -p:PublishSingleFile=true -p:PublishTrimmed=false -o publish/linux-x64
 
@@ -380,7 +380,7 @@ Sin el script, a mano:
 cd publish/win-x64 && zip -r smtp-mockup-win-x64.zip smtp-mockup.exe wwwroot appsettings.json
 ```
 
-> Al descomprimir en Linux o macOS el binario puede salir sin permiso de ejecución (según cómo
+> Al descomprimir en Linux el binario puede salir sin permiso de ejecución (según cómo
 > extraiga tu herramienta): `chmod +x smtp-mockup`.
 
 Notas:
@@ -389,7 +389,7 @@ Notas:
   rompe en runtime, no al compilar.
 - No hace falta `PublishSingleFile` si preferís DLLs sueltas, pero **`wwwroot` sigue siendo
   obligatorio**.
-- Cero dependencias nativas: el mismo publish vale para Windows, Linux y macOS usando su RID.
+- Cero dependencias nativas: el mismo publish vale para Windows y Linux usando su RID.
 - `publish/` está en `.gitignore` y no se versiona: son ~57 MB de binario por RID.
 
 ## Integración continua
@@ -566,7 +566,7 @@ pwsh -File scripts/ServiceImagePath.Tests.ps1           # 14 casos de los script
 3. **No hay E2E de la UI con navegador.** Los criterios 9 y 10 están cubiertos a nivel de componente
    (bUnit), no de punta a punta. Un Playwright sobre el binario publicado cerraría el círculo.
 4. **No hay CI.** Nada corre los tests automáticamente: `restore → build -warnaserror → test` en
-   Linux/Windows/macOS, más un `publish` que verifique `wwwroot/_framework`.
+   Linux/Windows, más un `publish` que verifique `wwwroot/_framework`.
 5. **`envelope.helo` es siempre `null`** (la librería no expone el dominio EHLO/HELO). El campo
    existe y es nullable, y nada depende de él todavía.
 
@@ -595,7 +595,7 @@ para que el bug de `Smtp:Plain:Enabled` pasara inadvertido.
 ### 3. Sin CI 🟡
 
 No hay workflow: nada impide mergear con la suite en rojo. El plan: `restore → build -warnaserror →
-test` en las tres plataformas, más un job de `publish` que falle si el artifact no trae
+test` en las dos plataformas, más un job de `publish` que falle si el artifact no trae
 `wwwroot/_framework`.
 
 ### 4. `envelope.helo` siempre `null` 🟢
@@ -618,12 +618,12 @@ comando está documentado más arriba). Con un `linux-x64.pubxml` los dos sería
 ### 7. ~~Faltan `scripts/publish.ps1` y `publish.sh`~~ ✅ resuelto
 
 SPEC §11.3 (criterio 19) los menciona. Ahora hay **un** script, `scripts/publish.py`, que hace
-compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las tres plataformas.
+compile + test + publish + **empaquetado en zip** (`--zip`), y es el mismo en las dos plataformas.
 
 No se hicieron dos scripts (`publish.ps1` + `publish.sh`) a propósito: dos copias de la misma
 lógica se divergen el día que hay que tocar una, y en PowerShell además habría que arrastrar el
 módulo de pruebas de parsing que ya existe para los scripts de servicio. Un script en Python cubre
-Windows, Linux y macOS sin duplicar nada. La SPEC se actualizó en vez de dejar el nombre literal.
+Windows y Linux sin duplicar nada. La SPEC se actualizó en vez de dejar el nombre literal.
 
 Cerrado además el punto que quedaba abierto de verdad: el zip se **verifica** después de
 escribirse (que lleve el ejecutable, `wwwroot/_framework/blazor.web.js` y `appsettings.json`, y que
@@ -656,7 +656,7 @@ El resto de la lista, por valor:
 1. **Tests directos de `FileSystemMessageStore`** (la deuda #1) y un test de arranque del Host con
    puertos efímeros (la #2). Es lo único que bloquea de verdad.
 2. **CI**: un `.github/workflows/ci.yml` con `restore → build -warnaserror → test` en
-   Linux/Windows/macOS, más el job de `publish` que verifique `wwwroot/_framework`.
+   Linux/Windows, más el job de `publish` que verifique `wwwroot/_framework`.
 3. **Retención automática (TTL).** `Hosting:LogRetentionDays` ya poda los logs; los mensajes se
    acumulan sin límite. Sería `Storage:RetentionDays` con una poda periódica.
 4. **Borrado con papelera.** Hoy el borrado es duro (se borra el archivo). Un `Storage:SoftDelete`

@@ -207,7 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--rid",
         action="append",
         metavar="RID",
-        help="RID a publicar, repetible (linux-x64, win-x64, osx-arm64...). "
+        help="RID a publicar, repetible (linux-x64, win-x64...). "
         "Por defecto: el del host y win-x64.",
     )
     parser.add_argument(

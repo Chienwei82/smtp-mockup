@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Envio de correo al smtp-mockup, sin dependencias externas (solo la biblioteca
-estandar) y portable a Windows, Linux y macOS.
+estandar) y portable a Windows y Linux.
 
 Es la version programable del ejemplo "Python (smtplib, sin dependencias)" del
 README (seccion "Mandar correo al mockup"): el mismo servidor y los mismos puertos,

@@ -4,7 +4,7 @@ Servidor SMTP falso para desarrollo con UI web incluida: acepta cualquier correo
 autenticación y sin relay, lo persiste como JSON y lo muestra en una interfaz Blazor para leerlo y
 borrarlo.
 
-- **Estado del documento:** v2.1 (v2.0 cambió la API HTTP por la UI Blazor; v2.1 es un ajuste menor)
+- **Estado del documento:** v2.2 (v2.0 cambió la API HTTP por la UI Blazor; v2.1 ajustó el puerto por defecto y añadió scripts; v2.2 retira el soporte de macOS)
 - **Stack:** .NET 10 (`net10.0`), C# 14, Blazor Web App (Interactive Server), MailKit + MimeKit
 - **Documento contraparte:** `DESIGN.md` (decisiones técnicas, empaquetado y plan)
 
@@ -24,7 +24,7 @@ Proveer un ejecutable local de un solo proceso que:
    descargar adjuntos y borrar los correos almacenados, leyendo directamente del `IMessageStore`.
 4. Actualiza la UI en vivo cuando llega o se borra un correo, sin recargar ni consultar por HTTP.
 5. Corre como `exe` standalone (self-contained) o como Windows Service en Windows, y como aplicación
-   de consola en Linux/macOS.
+   de consola en Linux.
 
 ### 1.2 Fuera de alcance (v1)
 - Relay o entrega real a servidores externos.
@@ -73,7 +73,7 @@ Proveer un ejecutable local de un solo proceso que:
   completo más de una vez.
 - **RNF-04 Aislamiento:** un parseo fallido no tumba el listener; el cliente recibe `550` y el
   servidor sigue aceptando conexiones.
-- **RNF-05 Portabilidad:** mismo comportamiento en Windows, Linux y macOS, sin dependencias nativas.
+- **RNF-05 Portabilidad:** mismo comportamiento en Windows y Linux, sin dependencias nativas.
 - **RNF-06 Clean Code / TDD:** lógica de negocio en `Core` con tests unitarios; parsing, storage y
   componentes Blazor cubiertos con tests (xUnit + `bunit` + `Microsoft.AspNetCore.Mvc.Testing`).
 - **RNF-07 Sin secretos en disco:** el certificado Auto se genera con clave aleatoria fuerte y el
@@ -81,7 +81,7 @@ Proveer un ejecutable local de un solo proceso que:
 - **RNF-08 Latencia de UI:** el circuito SignalR de Blazor no debe bloquear la persistencia; la
   notificación se emite *después* del rename atómico, nunca antes.
 - **RNF-09 Publicación sin assets rotos:** el publish debe entregar los assets estáticos de Blazor
-  (`wwwroot`, `_framework`) junto al ejecutable o embebidos, en Windows/Linux/macOS (§11.3).
+  (`wwwroot`, `_framework`) junto al ejecutable o embebidos, en Windows/Linux (§11.3).
 - **RNF-10 Segundos de arranque:** la UI responde el primer render en < 3 s tras `250` de arranque.
 
 ---
@@ -568,8 +568,8 @@ Reglas:
     **Un solo script, no dos.** La v2.0 de esta SPEC hablaba de `publish.ps1` + `publish.sh`.
     Se sustituyen por `scripts/publish.py`: dos copias de la misma lógica divergen en cuanto
     hay que tocar una, y PowerShell exigiría además arrastrar el módulo de pruebas de parsing
-    que ya existe para los scripts de servicio. Un script en Python cubre Windows, Linux y
-    macOS, y es el que hace las tres plataformas con el mismo comando.
+    que ya existe para los scripts de servicio. Un script en Python cubre Windows y Linux, y es
+    el que hace las dos plataformas con el mismo comando.
 
 ---
 
@@ -625,6 +625,14 @@ memory-bank; ver §13.
 | `Web:Port` por defecto | `8080` → `8888` (el 8080 choca a menudo con otros servicios de desarrollo). Sigue siendo configurable y admite `0` (efímero) |
 | Scripts de envío de prueba | `scripts/mockup_mailer.py` (módulo: cliente SMTP + generador de historias) y `scripts/send_story_mails.py` (manda tres correos de prueba con historias clásicas y graciosas generadas) |
 | Publicación con configuración | `scripts/publish-with-config.py`: publica como `publish.py` y, antes, pregunta si se quiere TLS y qué puertos usar; deja la respuesta escrita en el `appsettings.json` que se publica |
+
+### v2.2 — 2026-10-06 — Se retira el soporte de macOS
+
+| Ítem | Detalle |
+|------|---------|
+| Plataformas | Windows y Linux. macOS deja de ser objetivo: §1.1, RNF-05 y RNF-09 dejan de nombrarlo |
+| CI | La matriz del workflow pasa a `[ubuntu-latest, windows-latest]`; se elimina el job de publish `osx-arm64` |
+| Código | `PfxKeyStorage` mantiene la clave efímera **solo en Linux** (Windows no la usa en el handshake); se limpian de comentarios las razones de macOS. Sin cambios de comportamiento en Windows ni Linux |
 
 ---
 

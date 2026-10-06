@@ -21,8 +21,8 @@ public enum HostingMode
     Console = 1,
 
     /// <summary>
-    /// Fuerza el modo servicio. Sólo tiene sentido en Windows; en Linux o macOS el proceso arranca
-    /// como consola (el sistema no tiene un SCM equivalente).
+    /// Fuerza el modo servicio. Sólo tiene sentido en Windows; en Linux el proceso arranca como
+    /// consola (el sistema no tiene un SCM equivalente).
     /// </summary>
     WindowsService = 2,
 }
