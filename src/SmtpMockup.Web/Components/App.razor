@@ -12,6 +12,14 @@
        página sobrescriben esto cuando se navega dentro de la app. *@
     <title>@Title</title>
     <!--
+      Tipografía del prototipo (docs/UI-Prototype): Inter con respaldo del sistema. Si no hay red
+      —un mockup local puede arrancar sin ella—, el fallback system-ui mantiene la escala y el
+      aspecto general, sólo cambia la familia.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!--
       Los assets de MudBlazor se sirven desde _content/MudBlazor: los aporta el paquete como
       static web assets, así que el Host tiene que haber copiado wwwroot al publicar.
     -->

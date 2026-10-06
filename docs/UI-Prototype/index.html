@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Material You — Dark Theme</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* M3 Dark Theme — Teal / Blue tonal palette */
+    --md-primary: #4DD0E1;
+    --md-on-primary: #00363A;
+    --md-primary-container: #004D54;
+    --md-on-primary-container: #6FF7FF;
+
+    --md-secondary: #80CBC4;
+    --md-on-secondary: #003731;
+    --md-secondary-container: #005048;
+    --md-on-secondary-container: #A0F0E7;
+
+    --md-tertiary: #80CBF4;
+    --md-on-tertiary: #00344F;
+    --md-tertiary-container: #004B72;
+    --md-on-tertiary-container: #BEE6FF;
+
+    --md-error: #FFB4AB;
+    --md-on-error: #690005;
+    --md-success: #81C784;
+    --md-error-subtle: #EF9A9A;
+
+    /* Extended token surfaces for demo */
+    --md-surface-green: #1B3A2A;
+    --md-on-surface-green: #81C784;
+    --md-surface-purple: #2A1B3A;
+    --md-on-surface-purple: #CE93D8;
+
+    --md-surface: #111318;
+    --md-surface-dim: #111318;
+    --md-surface-bright: #37393E;
+    --md-on-surface: #E2E2E9;
+    --md-on-surface-variant: #C3C6CF;
+    --md-outline: #8D9199;
+    --md-outline-variant: #43474E;
+
+    --md-surface-container-lowest: #0B0D11;
+    --md-surface-container-low: #191C20;
+    --md-surface-container: #1D2024;
+    --md-surface-container-high: #282A2E;
+    --md-surface-container-highest: #333539;
+
+    /* Elevation overlays */
+    --md-elevation-1: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15);
+    --md-elevation-2: 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15);
+    --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.3);
+
+    /* Motion */
+    --md-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --md-motion-duration-short: 200ms;
+    --md-motion-duration-medium: 400ms;
+
+    /* Shape */
+    --md-shape-xs: 4px;
+    --md-shape-sm: 8px;
+    --md-shape-md: 12px;
+    --md-shape-lg: 16px;
+    --md-shape-xl: 28px;
+    --md-shape-full: 9999px;
+
+    /* Type — Inter (M3-aligned, publicly available) */
+    --md-type-display: 700 3.5rem/1.15 'Inter', system-ui, sans-serif;
+    --md-type-headline: 600 2rem/1.25 'Inter', system-ui, sans-serif;
+    --md-type-title: 600 1.125rem/1.4 'Inter', system-ui, sans-serif;
+    --md-type-body: 400 0.9375rem/1.6 'Inter', system-ui, sans-serif;
+    --md-type-label: 500 0.8125rem/1.4 'Inter', system-ui, sans-serif;
+    --md-type-label-sm: 500 0.6875rem/1.4 'Inter', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    background: var(--md-surface);
+    color: var(--md-on-surface);
+    font: var(--md-type-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Focus visible ─── */
+  :focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+    border-radius: var(--md-shape-xs);
+  }
+
+  .chip:focus-visible,
+  .feature-card:focus-visible,
+  .list-item:focus-visible,
+  .btn:focus-visible,
+  .avatar:focus-visible,
+  .icon-btn:focus-visible,
+  .nav-item:focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+  }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: var(--md-shape-full); }
+
+  /* ─── Typography: small text letter-spacing ─── */
+  .chip, .nav-item, .stat-card__label .chip, .top-bar__search kbd, .list-item__meta, .hero__eyebrow, .hero__viz-label {
+    letter-spacing: .02em;
+  }
+
+  /* ─── Top App Bar ─── */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 64px;
+    padding: 0 16px;
+    background: var(--md-surface-container);
+    border-bottom: 1px solid var(--md-outline-variant);
+    transition: box-shadow var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .top-bar.scrolled { box-shadow: var(--md-elevation-2); }
+
+  .top-bar__nav-toggle {
+    width: 48px; height: 48px;
+    display: grid; place-items: center;
+    border: none; background: none; color: var(--md-on-surface);
+    border-radius: var(--md-shape-full);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .top-bar__nav-toggle:hover { background: rgba(227,226,233,.08); }
+
+  .top-bar__brand {
+    font: var(--md-type-title);
+    color: var(--md-primary);
+    letter-spacing: -.01em;
+    user-select: none;
+  }
+  .top-bar__brand span { color: var(--md-on-surface); }
+
+  .top-bar__spacer { flex: 1; }
+
+  .top-bar__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-surface-container-highest);
+    color: var(--md-on-surface-variant);
+    font: var(--md-type-body);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+    max-width: 320px;
+    width: 100%;
+  }
+  .top-bar__search:hover { background: var(--md-surface-container-high); }
+  .top-bar__search svg { flex-shrink: 0; }
+  .top-bar__search kbd {
+    margin-left: auto;
+    font: var(--md-type-label-sm);
+    color: var(--md-outline);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-xs);
+    padding: 1px 6px;
+    line-height: 1.5;
+  }
+
+  .top-bar__actions { display: flex; gap: 4px; }
+
+  .icon-btn {
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    border: none; background: none; color: var(--md-on-surface-variant);
+    border-radius: var(--md-shape-full);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+    position: relative;
+  }
+  .icon-btn:hover { background: rgba(227,226,233,.08); }
+  .icon-btn .badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: var(--md-error);
+    border-radius: var(--md-shape-full);
+    border: 2px solid var(--md-surface-container);
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-tertiary-container);
+    color: var(--md-on-tertiary-container);
+    display: grid; place-items: center;
+    font: var(--md-type-label);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .avatar:hover { background: color-mix(in srgb, var(--md-tertiary-container), var(--md-on-tertiary-container) 12%); }
+
+  /* ─── Layout ─── */
+  .shell { display: flex; min-height: calc(100vh - 64px); }
+
+  /* ─── Navigation Rail ─── */
+  .nav-rail {
+    position: sticky;
+    top: 64px;
+    align-self: flex-start;
+    width: 80px;
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    background: var(--md-surface);
+    border-right: 1px solid var(--md-outline-variant);
+    overflow-y: auto;
+    z-index: 1;
+  }
+
+  .nav-rail__fab {
+    width: 56px; height: 56px;
+    display: grid; place-items: center;
+    border: none;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border-radius: var(--md-shape-lg);
+    cursor: pointer;
+    margin-bottom: 16px;
+    box-shadow: var(--md-elevation-1);
+    transition: box-shadow var(--md-motion-duration-short) var(--md-motion-standard),
+                background var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .nav-rail__fab:hover { box-shadow: var(--md-elevation-2); background: color-mix(in srgb, var(--md-primary-container), var(--md-primary) 12%); }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    width: 100%;
+    text-decoration: none;
+    color: var(--md-on-surface-variant);
+    font: var(--md-type-label-sm);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: color var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .nav-item__icon-wrap {
+    width: 56px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: var(--md-shape-full);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                color var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .nav-item:hover .nav-item__icon-wrap { background: rgba(227,226,233,.08); }
+  .nav-item.active {
+    color: var(--md-on-surface);
+  }
+  .nav-item.active .nav-item__icon-wrap {
+    background: transparent;
+    color: var(--md-on-secondary-container);
+    box-shadow: 0 0 6px 1px rgba(77,208,225,.3), 0 0 12px 2px rgba(77,208,225,.12);
+  }
+
+  .nav-rail__spacer { flex: 1; }
+
+  /* ─── Main Content ─── */
+  .main { flex: 1; padding: 24px 32px 80px; max-width: 1200px; }
+
+  /* ─── Entrance animations ─── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .animate-in.is-visible {
+    animation: fadeSlideUp .5s var(--md-motion-standard) forwards;
+  }
+  .animate-in--d1.is-visible { animation-delay: .1s; }
+  .animate-in--d2.is-visible { animation-delay: .2s; }
+  .animate-in--d3.is-visible { animation-delay: .3s; }
+  .animate-in--d4.is-visible { animation-delay: .4s; }
+  .animate-in--d5.is-visible { animation-delay: .5s; }
+
+  /* ─── Hero ─── */
+  .hero {
+    background: linear-gradient(135deg, var(--md-primary-container) 0%, var(--md-tertiary-container) 100%);
+    border-radius: var(--md-shape-xl);
+    padding: 48px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 85% 20%, rgba(77,208,225,.15), transparent 60%);
+    pointer-events: none;
+  }
+  .hero__content { position: relative; z-index: 1; }
+  .hero__eyebrow {
+    font: var(--md-type-label);
+    color: var(--md-on-primary-container);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 12px;
+  }
+  .hero__title {
+    font: 700 clamp(2rem, 4vw, 3.5rem)/1.1 'Inter', system-ui, sans-serif;
+    color: var(--md-on-primary-container);
+    margin-bottom: 12px;
+    max-width: 560px;
+  }
+  .hero__subtitle {
+    font: var(--md-type-body);
+    color: var(--md-on-primary-container);
+    opacity: .92;
+    max-width: 480px;
+    margin-bottom: 28px;
+  }
+  .hero__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero__viz {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero__viz-value {
+    font: 700 3rem/1 'Inter', system-ui, sans-serif;
+    color: var(--md-on-primary-container);
+    letter-spacing: -.02em;
+    opacity: 0;
+    animation: vizReveal .5s var(--md-motion-standard) .3s forwards;
+  }
+  @keyframes vizReveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero__viz-label {
+    font: var(--md-type-label);
+    color: var(--md-on-primary-container);
+    opacity: 0;
+    animation: vizReveal .4s var(--md-motion-standard) .5s forwards;
+  }
+  .hero__sparkline {
+    width: 160px;
+    height: 48px;
+  }
+  .hero__sparkline path {
+    fill: none;
+    stroke: var(--md-on-primary-container);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .5;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: sparkDraw 1.2s var(--md-motion-standard) .6s forwards;
+  }
+  @keyframes sparkDraw {
+    to { stroke-dashoffset: 0; }
+  }
+  .hero__sparkline .sparkline-fill {
+    fill: var(--md-on-primary-container);
+    opacity: 0;
+    stroke: none;
+    animation: sparkFillIn .8s var(--md-motion-standard) 1.4s forwards;
+  }
+  @keyframes sparkFillIn {
+    to { opacity: .08; }
+  }
+
+  /* ─── Buttons ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 24px;
+    border: none;
+    border-radius: var(--md-shape-full);
+    font: var(--md-type-label);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                box-shadow var(--md-motion-duration-short) var(--md-motion-standard);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn--filled {
+    background: var(--md-primary);
+    color: var(--md-on-primary);
+    box-shadow: var(--md-elevation-1);
+  }
+  .btn--filled:hover { box-shadow: var(--md-elevation-2); background: color-mix(in srgb, var(--md-primary), #fff 8%); }
+  .btn--outlined {
+    background: transparent;
+    color: var(--md-primary);
+    border: 1px solid var(--md-outline);
+  }
+  .btn--outlined:hover { background: rgba(77,208,225,.08); }
+  .btn--tonal {
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+  }
+  .btn--tonal:hover { box-shadow: var(--md-elevation-1); background: color-mix(in srgb, var(--md-secondary-container), #fff 8%); }
+  .btn--text {
+    background: transparent;
+    color: var(--md-primary);
+    padding: 0 12px;
+  }
+  .btn--text:hover { background: rgba(77,208,225,.08); }
+  .btn:disabled,
+  .btn[disabled] {
+    opacity: .38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ─── Section ─── */
+  .section { margin-bottom: 40px; }
+  .section--spaced { margin-top: 32px; }
+  .section__header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .section__title { font: var(--md-type-headline); color: var(--md-on-surface); }
+  .section__subtitle { font: var(--md-type-body); color: var(--md-on-surface-variant); }
+  .section__spacer { flex: 1; }
+
+  /* ─── Stats Row ─── */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+
+  .stat-card {
+    background: var(--md-surface-container);
+    border-radius: var(--md-shape-lg);
+    padding: 24px;
+    border: 1px solid var(--md-outline-variant);
+    transition: border-color var(--md-motion-duration-short) var(--md-motion-standard),
+                transform var(--md-motion-duration-short) var(--md-motion-standard);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card:hover { border-color: var(--md-outline); transform: translateY(-2px); box-shadow: var(--md-elevation-2); }
+  .stat-card:active { transform: translateY(0); box-shadow: var(--md-elevation-1); }
+  .stat-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .stat-card__label {
+    font: var(--md-type-label);
+    color: var(--md-on-surface-variant);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat-card__label .chip {
+    font: var(--md-type-label-sm);
+    padding: 2px 8px;
+    border-radius: var(--md-shape-full);
+    background: color-mix(in srgb, var(--md-primary) 16%, transparent);
+    color: var(--md-primary);
+    border-color: transparent;
+    cursor: default;
+  }
+  .stat-card__value {
+    font: var(--md-type-display);
+    font-size: 2.5rem;
+    line-height: 1.1;
+    color: var(--md-on-surface);
+    margin-bottom: 6px;
+  }
+  .stat-card__delta {
+    font: var(--md-type-label);
+    color: var(--md-success);
+  }
+  .stat-card__delta--neg { color: var(--md-error-subtle); }
+  .stat-card__sparkline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    opacity: .15;
+  }
+  .stat-card__sparkline path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .stat-card__sparkline .spark-area {
+    fill: currentColor;
+    opacity: .3;
+    stroke: none;
+  }
+
+  /* ─── Feature Grid ─── */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+  .feature-card {
+    background: var(--md-surface-container);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-lg);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color var(--md-motion-duration-short) var(--md-motion-standard),
+                background var(--md-motion-duration-short) var(--md-motion-standard),
+                transform var(--md-motion-duration-short) var(--md-motion-standard);
+    cursor: pointer;
+  }
+  .feature-card:hover {
+    border-color: var(--md-outline);
+    background: var(--md-surface-container-high);
+  }
+  .feature-card:active { transform: scale(.985); }
+  .feature-card__icon {
+    width: 48px; height: 48px;
+    display: grid; place-items: center;
+    border-radius: var(--md-shape-md);
+    font-size: 24px;
+    transition: transform var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .feature-card:hover .feature-card__icon { transform: scale(1.08); }
+  .feature-card__icon--teal { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+  .feature-card__icon--blue { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
+  .feature-card__icon--green { background: var(--md-surface-green); color: var(--md-on-surface-green); }
+  .feature-card__icon--purple { background: var(--md-surface-purple); color: var(--md-on-surface-purple); }
+
+
+  .feature-card__title {
+    font: var(--md-type-title);
+    color: var(--md-on-surface);
+  }
+  .feature-card__desc {
+    font: var(--md-type-body);
+    color: var(--md-on-surface-variant);
+    flex: 1;
+  }
+  .feature-card__footer { display: flex; align-items: center; gap: 8px; }
+  .feature-card__footer .chip { pointer-events: none; }
+
+  /* ─── Chips ─── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: var(--md-shape-sm);
+    font: var(--md-type-label);
+    border: 1px solid var(--md-outline-variant);
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                border-color var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .chip:hover { background: rgba(227,226,233,.08); }
+  .chip.selected {
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+    border-color: transparent;
+  }
+  .chip:disabled,
+  .chip[disabled] {
+    opacity: .38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ─── List ─── */
+  .list { display: flex; flex-direction: column; }
+
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: var(--md-shape-md);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+    cursor: pointer;
+  }
+  .list-item:hover { background: rgba(227,226,233,.08); }
+  .list-item:active { background: rgba(227,226,233,.12); }
+
+  .list-item__avatar {
+    width: 40px; height: 40px;
+    border-radius: var(--md-shape-full);
+    display: grid; place-items: center;
+    font: var(--md-type-label);
+    flex-shrink: 0;
+  }
+  .list-item__content { flex: 1; min-width: 0; }
+  .list-item__title {
+    font: var(--md-type-body);
+    font-weight: 500;
+    color: var(--md-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-item__subtitle {
+    font: var(--md-type-body);
+    font-size: .8125rem;
+    color: var(--md-on-surface-variant);
+  }
+  .list-item__meta {
+    font: var(--md-type-label);
+    color: var(--md-outline);
+    white-space: nowrap;
+  }
+
+  /* ─── Toggle / Switch ─── */
+  .switch {
+    position: relative;
+    width: 52px; height: 32px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .switch__track {
+    position: absolute;
+    inset: 0;
+    background: var(--md-surface-container-highest);
+    border: 2px solid var(--md-outline);
+    border-radius: var(--md-shape-full);
+    cursor: pointer;
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard),
+                border-color var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .switch__thumb {
+    position: absolute;
+    top: 6px; left: 6px;
+    width: 20px; height: 20px;
+    background: var(--md-outline);
+    border-radius: var(--md-shape-full);
+    transition: transform 180ms cubic-bezier(.34, 1.56, .64, 1),
+                background var(--md-motion-duration-short) var(--md-motion-standard),
+                width var(--md-motion-duration-short) var(--md-motion-standard),
+                height var(--md-motion-duration-short) var(--md-motion-standard),
+                top var(--md-motion-duration-short) var(--md-motion-standard),
+                left var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .switch input:checked + .switch__track {
+    background: var(--md-primary);
+    border-color: var(--md-primary);
+  }
+  .switch input:checked + .switch__track .switch__thumb {
+    background: var(--md-on-primary);
+    transform: translateX(20px);
+  }
+  .switch input:focus-visible + .switch__track {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+  }
+
+  /* ─── Progress ─── */
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--md-surface-container-highest);
+    border-radius: var(--md-shape-full);
+    overflow: hidden;
+  }
+  .progress-bar__fill {
+    height: 100%;
+    background: var(--md-primary);
+    border-radius: var(--md-shape-full);
+    transform-origin: left;
+    animation: progressFill .6s var(--md-motion-standard) both;
+  }
+  @keyframes progressFill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  .progress-row:nth-of-type(1) + .progress-bar .progress-bar__fill { animation-delay: .2s; }
+  .progress-row:nth-of-type(2) + .progress-bar .progress-bar__fill { animation-delay: .35s; }
+  .progress-row:nth-of-type(3) + .progress-bar .progress-bar__fill { animation-delay: .5s; }
+  .progress-row:nth-of-type(4) + .progress-bar .progress-bar__fill { animation-delay: .65s; }
+  @keyframes progressIndeterminate {
+    0% { width: 0; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0; margin-left: 100%; }
+  }
+  .progress-bar--indeterminate .progress-bar__fill {
+    width: 40% !important;
+    animation: progressIndeterminate 1.8s var(--md-motion-standard) infinite;
+  }
+
+  /* ─── Divider ─── */
+  .divider {
+    height: 1px;
+    background: var(--md-outline-variant);
+    margin: 16px 0;
+  }
+
+  /* ─── Snackbar ─── */
+  .snackbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px) scale(.92);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 48px;
+    background: var(--md-surface-container-highest);
+    color: var(--md-on-surface);
+    border-radius: var(--md-shape-sm);
+    box-shadow: var(--md-elevation-3);
+    font: var(--md-type-body);
+    z-index: 200;
+    opacity: 0;
+    transition: transform var(--md-motion-duration-medium) var(--md-motion-emphasized),
+                opacity var(--md-motion-duration-medium) var(--md-motion-standard);
+    pointer-events: none;
+  }
+  .snackbar.visible {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .snackbar__action {
+    font: var(--md-type-label);
+    color: var(--md-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: auto;
+  }
+
+  /* ─── FAB ─── */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px; height: 56px;
+    display: grid; place-items: center;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border: none;
+    border-radius: var(--md-shape-lg);
+    box-shadow: var(--md-elevation-3);
+    cursor: pointer;
+    z-index: 150;
+    opacity: 0;
+    animation: fabEnter .4s var(--md-motion-standard) .8s forwards;
+    transition: box-shadow var(--md-motion-duration-short) var(--md-motion-standard),
+                background var(--md-motion-duration-short) var(--md-motion-standard),
+                transform var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  @keyframes fabEnter {
+    from { opacity: 0; transform: scale(.6) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .fab:active { transform: scale(.92); }
+  .fab:hover { box-shadow: var(--md-elevation-3); background: color-mix(in srgb, var(--md-primary-container), var(--md-primary) 12%); }
+
+  /* ─── Bottom Nav (mobile) ─── */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: var(--md-surface-container);
+    border-top: 1px solid var(--md-outline-variant);
+    z-index: 100;
+    padding: 0 8px;
+  }
+  .bottom-nav__items {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--md-on-surface-variant);
+    font: var(--md-type-label-sm);
+    cursor: pointer;
+    padding: 12px 0 16px;
+  }
+  .bottom-nav__item-icon {
+    width: 64px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: var(--md-shape-full);
+    transition: background var(--md-motion-duration-short) var(--md-motion-standard);
+  }
+  .bottom-nav__item.active { color: var(--md-on-surface); }
+  .bottom-nav__item.active .bottom-nav__item-icon {
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+  }
+
+  /* ─── Two-col layout ─── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+  }
+
+  /* ─── Panel ─── */
+  .panel {
+    background: var(--md-surface-container);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-lg);
+    padding: 24px;
+  }
+  .panel + .panel { margin-top: 16px; }
+  .panel__title {
+    font: var(--md-type-title);
+    color: var(--md-on-surface);
+    margin-bottom: 16px;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 1024px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .nav-rail { display: none; }
+    .bottom-nav { display: block; }
+    .main { padding: 16px 16px 100px; }
+    .hero { padding: 32px 24px; grid-template-columns: 1fr; }
+    .hero__title { font-size: 2.25rem; }
+    .hero__viz { align-self: start; }
+    .top-bar__search { display: none; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .fab { bottom: 96px; }
+  }
+
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Reduced motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+      animation-delay: 0ms !important;
+    }
+  }
+
+  /* ─── Surfaces demo section ─── */
+  .surfaces-demo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .surface-swatch {
+    height: 80px;
+    border-radius: var(--md-shape-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    font: var(--md-type-label-sm);
+    border: 1px solid var(--md-outline-variant);
+  }
+  .surface-swatch__name { margin-bottom: 2px; }
+
+  /* ─── Color tokens demo ─── */
+  .color-tokens {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .color-token {
+    height: 64px;
+    border-radius: var(--md-shape-md);
+    display: flex;
+    align-items: flex-end;
+    padding: 8px;
+    font: var(--md-type-label-sm);
+    border: 1px solid var(--md-outline-variant);
+  }
+
+  /* ─── Progress row ─── */
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .progress-row + .progress-bar { margin-bottom: 20px; }
+  .progress-row__label { font: var(--md-type-label); color: var(--md-on-surface); }
+  .progress-row__value { font: var(--md-type-label); color: var(--md-primary); }
+</style>
+</head>
+<body>
+
+<!-- ─── Top App Bar ─── -->
+<header class="top-bar" id="topBar">
+  <button class="top-bar__nav-toggle" aria-label="Menu">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  </button>
+  <div class="top-bar__brand">Material<span>You</span></div>
+  <div class="top-bar__spacer"></div>
+  <div class="top-bar__search" role="search" tabindex="0">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"></circle><line x1="12" y1="12" x2="16" y2="16"></line></svg>
+    Search
+    <kbd>⌘K</kbd>
+  </div>
+  <div class="top-bar__actions">
+    <button class="icon-btn" aria-label="Notifications">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 2a5.5 5.5 0 0 1 5.5 5.5c0 3 1 5 2 6.5H2.5c1-1.5 2-3.5 2-6.5A5.5 5.5 0 0 1 10 2z"></path><path d="M8.5 16a1.5 1.5 0 0 0 3 0"></path></svg>
+      <span class="badge"></span>
+    </button>
+    <button class="icon-btn" aria-label="Settings">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 1.5v2m0 13v2m-7.5-7.5h2m13 0h2M3.3 3.3l1.4 1.4m8.6 8.6 1.4 1.4M3.3 16.7l1.4-1.4m8.6-8.6 1.4-1.4"></path></svg>
+    </button>
+    <div class="avatar" role="button" tabindex="0" aria-label="Profile">D</div>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- ─── Navigation Rail ─── -->
+  <nav class="nav-rail" aria-label="Main" id="navRail">
+    <button class="nav-rail__fab" aria-label="New">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <a class="nav-item active" href="#">
+      <div class="nav-item__icon-wrap">
+        <svg width="22" height="22" fill="currentColor"><path d="M4 13h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm0 7h6a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1Zm10 0h6a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm0-16v4a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1Z"></path></svg>
+      </div>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-item__icon-wrap">
+        <svg width="22" height="22" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"/></svg>
+      </div>
+      Tasks
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-item__icon-wrap">
+        <svg width="22" height="22" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v16l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm0 14H5.17L4 17.17V4h16v12Z"></path></svg>
+      </div>
+      Messages
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-item__icon-wrap">
+        <svg width="22" height="22" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2ZM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8Zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7Z"></path></svg>
+      </div>
+      History
+    </a>
+
+    <div class="nav-rail__spacer"></div>
+
+    <a class="nav-item" href="#">
+      <div class="nav-item__icon-wrap">
+        <svg width="22" height="22" fill="currentColor"><path d="M19.14 12.94a7.015 7.015 0 0 0 .06-.94c0-.32-.02-.64-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.94 6.94 0 0 0-1.63-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.63.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.06.62-.06.94s.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58ZM12 15.6A3.6 3.6 0 1 1 15.6 12 3.61 3.61 0 0 1 12 15.6Z"></path></svg>
+      </div>
+      Settings
+    </a>
+  </nav>
+
+  <!-- ─── Main ─── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="hero animate-in">
+      <div class="hero__content">
+        <div class="hero__eyebrow">Material Design 3</div>
+        <h1 class="hero__title">Dark Theme Dashboard</h1>
+        <p class="hero__subtitle">A showcase of the Material You dark color system with teal primary, blue tertiary, and layered gray surface containers.</p>
+        <div class="hero__actions">
+          <button class="btn btn--filled">
+            <svg width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg>
+            Get Started
+          </button>
+          <button class="btn btn--tonal">Learn More</button>
+          <button class="btn btn--text">View Docs</button>
+        </div>
+      </div>
+      <div class="hero__viz">
+        <div class="hero__viz-value" data-target="24.8" data-suffix="K">24.8K</div>
+        <div class="hero__viz-label">Active Users</div>
+        <svg class="hero__sparkline" viewBox="0 0 160 48" preserveAspectRatio="none" aria-hidden="true">
+          <path class="sparkline-fill" d="M0,48 L0,32 L20,28 L40,30 L60,22 L80,18 L100,20 L120,12 L140,8 L160,4 L160,48 Z"></path>
+          <path d="M0,32 L20,28 L40,30 L60,22 L80,18 L100,20 L120,12 L140,8 L160,4"></path>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section animate-in animate-in--d1">
+      <div class="section__header">
+        <h2 class="section__title">Overview</h2>
+        <span class="section__subtitle">Last 30 days</span>
+        <div class="section__spacer"></div>
+        <button class="chip selected">All</button>
+        <button class="chip">Web</button>
+        <button class="chip">Mobile</button>
+      </div>
+      <div class="stats">
+        <div class="stat-card" style="color: var(--md-primary);">
+          <div class="stat-card__header">
+            <div class="stat-card__label">Users</div>
+            <span class="chip">+12%</span>
+          </div>
+          <div class="stat-card__value" data-stat="24.8" data-prefix="" data-suffix="K">24.8K</div>
+          <div class="stat-card__delta">↑ 2,340 from last month</div>
+          <svg class="stat-card__sparkline" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+            <path class="spark-area" d="M0,40 L0,28 L30,24 L60,26 L90,18 L120,14 L150,16 L180,10 L200,6 L200,40 Z"></path>
+            <path d="M0,28 L30,24 L60,26 L90,18 L120,14 L150,16 L180,10 L200,6"></path>
+          </svg>
+        </div>
+        <div class="stat-card" style="color: var(--md-tertiary);">
+          <div class="stat-card__header">
+            <div class="stat-card__label">Revenue</div>
+          </div>
+          <div class="stat-card__value" data-stat="84.2" data-prefix="$" data-suffix="K">$84.2K</div>
+          <div class="stat-card__delta">↑ 8.1% from last month</div>
+          <svg class="stat-card__sparkline" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+            <path class="spark-area" d="M0,40 L0,30 L30,26 L60,28 L90,20 L120,16 L150,12 L180,8 L200,4 L200,40 Z"></path>
+            <path d="M0,30 L30,26 L60,28 L90,20 L120,16 L150,12 L180,8 L200,4"></path>
+          </svg>
+        </div>
+        <div class="stat-card" style="color: var(--md-error-subtle);">
+          <div class="stat-card__header">
+            <div class="stat-card__label">Conversion</div>
+            <span class="chip">-2%</span>
+          </div>
+          <div class="stat-card__value" data-stat="3.24" data-prefix="" data-suffix="%">3.24%</div>
+          <div class="stat-card__delta stat-card__delta--neg">↓ 0.07% from last month</div>
+          <svg class="stat-card__sparkline" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+            <path class="spark-area" d="M0,40 L0,12 L30,14 L60,10 L90,16 L120,20 L150,22 L180,26 L200,28 L200,40 Z"></path>
+            <path d="M0,12 L30,14 L60,10 L90,16 L120,20 L150,22 L180,26 L200,28"></path>
+          </svg>
+        </div>
+        <div class="stat-card" style="color: var(--md-on-surface-green);">
+          <div class="stat-card__header">
+            <div class="stat-card__label">Sessions</div>
+          </div>
+          <div class="stat-card__value" data-stat="142" data-prefix="" data-suffix="K">142K</div>
+          <div class="stat-card__delta">↑ 14.3% from last month</div>
+          <svg class="stat-card__sparkline" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+            <path class="spark-area" d="M0,40 L0,32 L30,28 L60,30 L90,22 L120,18 L150,14 L180,10 L200,6 L200,40 Z"></path>
+            <path d="M0,32 L30,28 L60,30 L90,22 L120,18 L150,14 L180,10 L200,6"></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features + Side Panel -->
+    <div class="two-col">
+      <section class="section animate-in animate-in--d2">
+        <div class="section__header">
+          <h2 class="section__title">Capabilities</h2>
+          <div class="section__spacer"></div>
+          <button class="btn btn--text">View All</button>
+        </div>
+        <div class="features">
+          <div class="feature-card feature-card--teal" tabindex="0">
+            <div class="feature-card__icon feature-card__icon--teal">
+              <svg width="24" height="24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+            </div>
+            <div class="feature-card__title">Dynamic Color</div>
+            <div class="feature-card__desc">Generate tonal palettes from a seed color. Every surface, text, and accent derives from one source.</div>
+            <div class="feature-card__footer">
+              <span class="chip">Theming</span>
+              <span class="chip">Palette</span>
+            </div>
+          </div>
+          <div class="feature-card feature-card--blue" tabindex="0">
+            <div class="feature-card__icon feature-card__icon--blue">
+              <svg width="24" height="24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2Zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z"></path></svg>
+            </div>
+            <div class="feature-card__title">Elevation &amp; Surfaces</div>
+            <div class="feature-card__desc">Layered surfaces from lowest to highest with tonal tinting — not just opacity overlays.</div>
+            <div class="feature-card__footer">
+              <span class="chip">Elevation</span>
+              <span class="chip">Surface</span>
+            </div>
+          </div>
+          <div class="feature-card feature-card--green" tabindex="0">
+            <div class="feature-card__icon feature-card__icon--green">
+              <svg width="24" height="24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg>
+            </div>
+            <div class="feature-card__title">Shape System</div>
+            <div class="feature-card__desc">Shape tokens from extra-small to full — rounded corners that convey hierarchy and affordance.</div>
+            <div class="feature-card__footer">
+              <span class="chip">Shape</span>
+              <span class="chip">Tokens</span>
+            </div>
+          </div>
+          <div class="feature-card feature-card--purple" tabindex="0">
+            <div class="feature-card__icon feature-card__icon--purple">
+              <svg width="24" height="24" fill="currentColor"><path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.48 2.54l2.6 1.53A8.89 8.89 0 0 0 21 12.05c0-5.18-3.95-9.45-9-9.95ZM12 19.95c-3.17 0-5.92-1.87-7.2-4.55l2.6-1.53A7.96 7.96 0 0 0 12 17.95a7.96 7.96 0 0 0 4.6-1.98l2.6 1.53A9.895 9.895 0 0 1 12 19.95ZM12 6.05c-3.17 0-5.92 1.87-7.2 4.55l2.6 1.53A7.96 7.96 0 0 1 12 8.05a7.96 7.96 0 0 1 4.6 1.98l2.6-1.53A9.895 9.895 0 0 0 12 6.05Z"></path></svg>
+            </div>
+            <div class="feature-card__title">Motion &amp; Transitions</div>
+            <div class="feature-card__desc">Emphasized easing for entrances, standard for state changes — motion that communicates, not decorates.</div>
+            <div class="feature-card__footer">
+              <span class="chip">Motion</span>
+              <span class="chip">Easing</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side Panel -->
+      <aside>
+        <section class="panel">
+          <div class="panel__title">Surface Tokens</div>
+          <div class="surfaces-demo" aria-hidden="true">
+            <div class="surface-swatch" style="background: var(--md-surface-container-lowest);">
+              <span class="surface-swatch__name">Lowest</span>
+            </div>
+            <div class="surface-swatch" style="background: var(--md-surface-container-low);">
+              <span class="surface-swatch__name">Low</span>
+            </div>
+            <div class="surface-swatch" style="background: var(--md-surface-container);">
+              <span class="surface-swatch__name">Container</span>
+            </div>
+            <div class="surface-swatch" style="background: var(--md-surface-container-high);">
+              <span class="surface-swatch__name">High</span>
+            </div>
+            <div class="surface-swatch" style="background: var(--md-surface-container-highest);">
+              <span class="surface-swatch__name">Highest</span>
+            </div>
+            <div class="surface-swatch" style="background: var(--md-surface-bright);">
+              <span class="surface-swatch__name">Bright</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__title">Color Tokens</div>
+          <div class="color-tokens" aria-hidden="true">
+            <div class="color-token" style="background: var(--md-primary); color: var(--md-on-primary);">Primary</div>
+            <div class="color-token" style="background: var(--md-primary-container); color: var(--md-on-primary-container);">Primary C.</div>
+            <div class="color-token" style="background: var(--md-secondary); color: var(--md-on-secondary);">Secondary</div>
+            <div class="color-token" style="background: var(--md-secondary-container); color: var(--md-on-secondary-container);">Secondary C.</div>
+            <div class="color-token" style="background: var(--md-tertiary); color: var(--md-on-tertiary);">Tertiary</div>
+            <div class="color-token" style="background: var(--md-tertiary-container); color: var(--md-on-tertiary-container);">Tertiary C.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__title">Components</div>
+          <div class="list">
+            <div class="list-item">
+              <div class="list-item__avatar" style="background: var(--md-primary-container); color: var(--md-on-primary-container);">
+                <svg width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"></path></svg>
+              </div>
+              <div class="list-item__content">
+                <div class="list-item__title">Navigation Rail</div>
+                <div class="list-item__subtitle">Side navigation with FAB</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked="">
+                <div class="switch__track"><div class="switch__thumb"></div></div>
+              </label>
+            </div>
+            <div class="list-item">
+              <div class="list-item__avatar" style="background: var(--md-tertiary-container); color: var(--md-on-tertiary-container);">
+                <svg width="20" height="20" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v16l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"></path></svg>
+              </div>
+              <div class="list-item__content">
+                <div class="list-item__title">Top App Bar</div>
+                <div class="list-item__subtitle">Sticky with elevation</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked="">
+                <div class="switch__track"><div class="switch__thumb"></div></div>
+              </label>
+            </div>
+            <div class="list-item">
+              <div class="list-item__avatar" style="background: var(--md-surface-green); color: var(--md-on-surface-green);">
+                <svg width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2Zm-5 14H7v-2h7v2Zm3-4H7v-2h10v2Zm0-4H7V7h10v2Z"></path></svg>
+              </div>
+              <div class="list-item__content">
+                <div class="list-item__title">Cards &amp; Panels</div>
+                <div class="list-item__subtitle">Surface containers with borders</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" checked="">
+                <div class="switch__track"><div class="switch__thumb"></div></div>
+              </label>
+            </div>
+            <div class="list-item">
+              <div class="list-item__avatar" style="background: var(--md-surface-purple); color: var(--md-on-surface-purple);">
+                <svg width="20" height="20" fill="currentColor"><path d="M7 10l5 5 5-5H7Z"></path></svg>
+              </div>
+              <div class="list-item__content">
+                <div class="list-item__title">Chips &amp; Buttons</div>
+                <div class="list-item__subtitle">Filled, tonal, outlined, text</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox">
+                <div class="switch__track"><div class="switch__thumb"></div></div>
+              </label>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Progress Section -->
+    <section class="section section--spaced animate-in animate-in--d3">
+      <div class="section__header">
+        <h2 class="section__title">Build Progress</h2>
+      </div>
+      <div class="panel">
+        <div class="progress-row">
+          <span class="progress-row__label">Token System</span>
+          <span class="progress-row__value">92%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar__fill" style="width: 92%;"></div></div>
+
+        <div class="progress-row">
+          <span class="progress-row__label">Component Library</span>
+          <span class="progress-row__value">78%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar__fill" style="width: 78%;"></div></div>
+
+        <div class="progress-row">
+          <span class="progress-row__label">Documentation</span>
+          <span class="progress-row__value">45%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar__fill" style="width: 45%;"></div></div>
+
+        <div class="progress-row">
+          <span class="progress-row__label">Testing Coverage</span>
+          <span class="progress-row__value">61%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar__fill" style="width: 61%;"></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ─── Bottom Nav (mobile) ─── -->
+<nav class="bottom-nav" aria-label="Mobile">
+  <div class="bottom-nav__items">
+    <a class="bottom-nav__item active" href="#">
+      <div class="bottom-nav__item-icon">
+        <svg width="22" height="22" fill="currentColor"><path d="M4 13h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm0 7h6a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1Zm10 0h6a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm0-16v4a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1Z"></path></svg>
+      </div>
+      Home
+    </a>
+    <a class="bottom-nav__item" href="#">
+      <div class="bottom-nav__item-icon">
+        <svg width="22" height="22" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"></path></svg>
+      </div>
+      Tasks
+    </a>
+    <a class="bottom-nav__item" href="#">
+      <div class="bottom-nav__item-icon">
+        <svg width="22" height="22" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v16l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"></path></svg>
+      </div>
+      Chat
+    </a>
+    <a class="bottom-nav__item" href="#">
+      <div class="bottom-nav__item-icon">
+        <svg width="22" height="22" fill="currentColor"><path d="M19.14 12.94a7.015 7.015 0 0 0 .06-.94c0-.32-.02-.64-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.94 6.94 0 0 0-1.63-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.63.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.06.62-.06.94s.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58ZM12 15.6A3.6 3.6 0 1 1 15.6 12 3.61 3.61 0 0 1 12 15.6Z"></path></svg>
+      </div>
+      Settings
+    </a>
+  </div>
+</nav>
+
+<!-- ─── FAB ─── -->
+<button class="fab" aria-label="Compose" id="fab" role="button" tabindex="0">
+  <svg width="24" height="24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82Z"></path></svg>
+</button>
+
+<!-- ─── Snackbar ─── -->
+<div class="snackbar" id="snackbar">
+  Theme applied successfully
+  <button class="snackbar__action">Dismiss</button>
+</div>
+
+<script>
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Sticky bar elevation
+  const topBar = document.getElementById('topBar');
+  window.addEventListener('scroll', () => {
+    topBar.classList.toggle('scrolled', window.scrollY > 4);
+  }, { passive: true });
+
+  // Scroll-triggered section reveals
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-visible');
+        revealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.animate-in').forEach(el => {
+    if (reducedMotion) { el.classList.add('is-visible'); }
+    else { revealObserver.observe(el); }
+  });
+
+  // Stat card count-up on scroll
+  function animateValue(el, target, prefix, suffix, dur) {
+    if (reducedMotion) { el.textContent = prefix + target + suffix; return; }
+    const start = performance.now();
+    const decimals = (target.toString().split('.')[1] || '').length;
+    function tick(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      el.textContent = prefix + (target * ease).toFixed(decimals) + suffix;
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const target = parseFloat(el.dataset.stat);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix || '';
+        animateValue(el, target, prefix, suffix, 900);
+        statObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-stat]').forEach(el => statObserver.observe(el));
+
+  // Hero value count-up
+  const heroVal = document.querySelector('.hero__viz-value');
+  if (heroVal) {
+    const target = parseFloat(heroVal.dataset.target || '24.8');
+    const suffix = heroVal.dataset.suffix || 'K';
+    if (reducedMotion) { heroVal.textContent = target + suffix; }
+    else {
+      const duration = 900, start = performance.now();
+      heroVal.textContent = '0';
+      function tick(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        heroVal.textContent = (target * ease).toFixed(1) + suffix;
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      setTimeout(() => requestAnimationFrame(tick), 400);
+    }
+  }
+
+  // Snackbar helper
+  const snackbar = document.getElementById('snackbar');
+  let snackbarTimer = null;
+  function showSnackbar(msg) {
+    clearTimeout(snackbarTimer);
+    snackbar.textContent = msg;
+    snackbar.insertAdjacentHTML('beforeend', ' <button class="snackbar__action">Dismiss</button>');
+    snackbar.querySelector('.snackbar__action').addEventListener('click', () => snackbar.classList.remove('visible'));
+    snackbar.classList.add('visible');
+    snackbarTimer = setTimeout(() => snackbar.classList.remove('visible'), 3000);
+  }
+
+  // Nav rail active state
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Bottom nav active state
+  document.querySelectorAll('.bottom-nav__item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.bottom-nav__item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Chip selection + keyboard
+  document.querySelectorAll('.section__header .chip').forEach(chip => {
+    chip.setAttribute('role', 'option');
+    chip.setAttribute('tabindex', '0');
+    chip.addEventListener('click', () => {
+      chip.closest('.section__header').querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    chip.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chip.click(); }
+    });
+  });
+
+  // Feature card keyboard support
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.setAttribute('role', 'button');
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+    card.addEventListener('click', () => {
+      showSnackbar(card.querySelector('.feature-card__title').textContent + ' selected');
+    });
+  });
+
+  // List item keyboard support
+  document.querySelectorAll('.list-item').forEach(item => {
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('role', 'button');
+    item.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+    });
+  });
+
+  // FAB -> snackbar
+  const fab = document.getElementById('fab');
+  fab.addEventListener('click', () => {
+    showSnackbar('Theme applied successfully');
+  });
+  fab.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fab.click(); }
+  });
+</script>
+
+
+</body></html>

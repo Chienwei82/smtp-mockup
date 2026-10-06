@@ -438,6 +438,28 @@ git commit -am "..." && git push -u origin feat/mi-cambio
 gh pr create --fill             # el CI arranca solo
 gh pr merge --squash --delete-branch
 ```
+### Utilidades git (`scripts/`)
+
+Dos scripts de comodidad para el flujo de ramas/PR de arriba. Python sin dependencias, igual que el
+resto de `scripts/`:
+
+| Script | Qué hace |
+|--------|----------|
+| `git_new_branch.py` | Crea y prepara una rama de trabajo desde la actual: avisa si hay cambios sin commitear (ofrece `git stash`), sincroniza con `--ff-only`, monta el nombre `tipo/kebab-case` y, con `--push`, la sube con tracking |
+| `git_cleanup.py` | Limpieza post-merge: `fetch --prune`, fast-forward de `main`, borrado de ramas locales cuyo tracking remoto ya desapareció (con verificación de que su contenido ya está integrado, para sobrevivir a merges con *squash*) y restauración de `.gitignore` si sólo lo ensuciaron worktrees |
+
+```bash
+python3 scripts/git_new_branch.py -t feat -n 'Add login page'   # crea feat/add-login-page
+python3 scripts/git_new_branch.py --dry-run                     # muestra qué haría
+python3 scripts/git_cleanup.py                                 # preguntando en cada borrado
+python3 scripts/git_cleanup.py --dry-run                       # sin tocar nada
+python3 scripts/git_cleanup.py --branch dev --yes               # otra rama principal, sin preguntar
+```
+
+Ninguno de los dos borra la rama actual ni la principal (`--branch`, `main` por defecto), y todo lo
+destructivo tiene `--dry-run` y confirmación (o `--yes` para automatizar).
+
+
 
 ## Instalarlo como servicio de Windows
 

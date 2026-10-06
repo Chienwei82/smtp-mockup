@@ -4,7 +4,7 @@ Servidor SMTP falso para desarrollo con UI web incluida: acepta cualquier correo
 autenticación y sin relay, lo persiste como JSON y lo muestra en una interfaz Blazor para leerlo y
 borrarlo.
 
-- **Estado del documento:** v2.2 (v2.0 cambió la API HTTP por la UI Blazor; v2.1 ajustó el puerto por defecto y añadió scripts; v2.2 retira el soporte de macOS)
+- **Estado del documento:** v2.3 (v2.0 cambió la API HTTP por la UI Blazor; v2.1 ajustó el puerto por defecto y añadió scripts; v2.2 retira el soporte de macOS; v2.3 adopta el estilo Material You dark del prototipo de diseño y la accesibilidad)
 - **Stack:** .NET 10 (`net10.0`), C# 14, Blazor Web App (Interactive Server), MailKit + MimeKit
 - **Documento contraparte:** `DESIGN.md` (decisiones técnicas, empaquetado y plan)
 
@@ -456,6 +456,33 @@ Reglas:
 
 ---
 
+### 9.8 Estilo visual y accesibilidad (v2.3)
+
+La UI adopta el estilo del prototipo de diseño versionado en `docs/UI-Prototype/` (Material You
+dark, paleta teal/azul, tipografía Inter) como contrato visual:
+
+- **Tokens**: los valores `--md-*` del export (color, superficies, elevación, motion, shape y
+  escala tipográfica) son la fuente de verdad. Viven en `wwwroot/app.css`; el tema MudBlazor
+  equivalente (`Theme/MockupTheme.cs`) pinta los controles de la librería con los mismos valores.
+- **Layout**: barra superior fija con la marca (`Web:Title`), nav rail vertical de cuatro destinos
+  en escritorio y bottom nav en móvil (≤768px), contenido en `<main>` con ancho máximo 1200px.
+- **Excepciones al export** (documentadas en `MockupTheme.cs`): el rol semántico *warning* (ámbar)
+  no existe en el prototipo y se añade para los estados de aviso; la tipografía se mapea a los
+  quince huecos de MudBlazor.
+
+Requisitos de accesibilidad y usabilidad que el markup debe cumplir (cubiertos por tests):
+
+- Un **`<h1>` por página** (el título): además da foco al `FocusOnNavigate` de `Routes.razor`.
+- **Skip link** al contenido y landmarks (`header`, `nav` con `aria-label`, `main`).
+- Tablas clave/valor con **`<th scope="row">`**; controles de icono y checkboxes con `aria-label`
+  descriptivo; resumen de resultados y paginación en **`aria-live="polite"`**.
+- Filtros agrupados en `fieldset`/`legend`; diálogo de confirmación con `role="alertdialog"`,
+  `aria-labelledby`/`aria-describedby` y foco inicial en «Cancelar».
+- **`prefers-reduced-motion`** desactiva transiciones y animaciones; el foco de teclado es siempre
+  visible (contorno de 2px con el color de acento).
+
+---
+
 ## 10. Manejo de errores y casos borde
 
 ### 10.1 SMTP
@@ -633,6 +660,16 @@ memory-bank; ver §13.
 | Plataformas | Windows y Linux. macOS deja de ser objetivo: §1.1, RNF-05 y RNF-09 dejan de nombrarlo |
 | CI | La matriz del workflow pasa a `[ubuntu-latest, windows-latest]`; se elimina el job de publish `osx-arm64` |
 | Código | `PfxKeyStorage` mantiene la clave efímera **solo en Linux** (Windows no la usa en el handshake); se limpian de comentarios las razones de macOS. Sin cambios de comportamiento en Windows ni Linux |
+
+### v2.3 — 2026-10-06 — Estilo Material You dark y accesibilidad
+
+| Ítem | Detalle |
+|------|---------|
+| Estilo visual | Se adopta el prototipo `docs/UI-Prototype/` como contrato visual (§9.8): tokens `--md-*` en `wwwroot/app.css`, tema MudBlazor `Theme/MockupTheme.cs` (paleta teal/azul, Inter, radios 12px), barra superior + nav rail + bottom nav móvil |
+| Accesibilidad | Un `<h1>` por página (habilita el `FocusOnNavigate` de `Routes.razor`), skip link, landmarks, `<th scope="row">` en tablas clave/valor, `aria-label` en controles de icono, `aria-live` en el resumen de resultados y la paginación, `fieldset`/`legend` en los filtros, `prefers-reduced-motion` |
+| Layout | La navegación sale del `MudAppBar` (donde desbordaba en pantallas estrechas) al nav rail; el contenido va en `<main id="main-content">` con ancho máximo 1200px |
+| Excepciones al export | El rol *warning* (ámbar `#FFCF66`) no existe en el prototipo y se añade para estados de aviso; la escala tipográfica se reparte en los huecos de MudBlazor |
+| Tests | `tests/SmtpMockup.Web.Tests/AccessibilityTests.cs`: landmarks del layout, un solo `h1` por página, grupo de filtros etiquetado, región viva del resumen, `th scope="row"` en el sobre |
 
 ---
 

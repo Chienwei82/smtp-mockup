@@ -8,8 +8,11 @@
 
 <div class="d-flex align-center justify-space-between mb-4 flex-wrap gap-2">
     <div>
-        <MudText Typo="Typo.h5">Mensajes recibidos</MudText>
-        <MudText Typo="Typo.body2" data-testid="result-summary">@ResultSummary</MudText>
+        @* Título de la página: el único <h1> del documento. Con h1 real el FocusOnNavigate de
+           Routes.razor (Selector="h1") deja de apuntar a ninguna parte al navegar. *@
+        <MudText Typo="Typo.h1">Mensajes recibidos</MudText>
+        @* aria-live: el recuento se anuncia al filtrar sin tener que buscar la tabla. *@
+        <MudText Typo="Typo.body2" data-testid="result-summary" aria-live="polite">@ResultSummary</MudText>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RefreshAsync"
@@ -39,7 +42,10 @@
 }
 
 <MudPaper Class="pa-4 mb-4" Elevation="1">
-    <MudGrid>
+    @* fieldset + legend: los filtros son un grupo con nombre accesible, no siete campos sueltos. *@
+    <fieldset class="filters">
+        <legend class="section-title">Filtros</legend>
+        <MudGrid>
         <MudItem xs="12" md="4">
             <MudTextField T="string" Label="Buscar" Placeholder="asunto, remitente o destinatario"
                           Value="@_filter.Search" ValueChanged="OnSearchChanged"
@@ -92,7 +98,8 @@
                 </MudButton>
             }
         </MudItem>
-    </MudGrid>
+        </MudGrid>
+    </fieldset>
 </MudPaper>
 
 @if (_result.Items.Count == 0)
@@ -111,6 +118,7 @@ else
         <HeaderContent>
             <MudTh>
                 <MudCheckBox T="bool" Value="@AllOnPageSelected" ValueChanged="ToggleAllOnPage"
+                             aria-label="Seleccionar todos los mensajes de la página"
                              data-testid="select-all" />
             </MudTh>
             <MudTh>Recibido</MudTh>
@@ -125,6 +133,7 @@ else
             <MudTd>
                 <MudCheckBox T="bool" Value="@_selection.Contains(context.Id)"
                               ValueChanged="@(selected => Toggle(context.Id, selected))"
+                              aria-label="@($"Seleccionar el mensaje {SubjectDecoder.ForDisplay(context.Subject)}")"
                               data-testid="@($"select-{context.Id}")" />
             </MudTd>
             <MudTd DataLabel="Recibido">@FormatTimestamp(context.ReceivedAtUtc)</MudTd>
@@ -146,18 +155,21 @@ else
             </MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                               aria-label="Borrar" OnClick="@(() => AskDeleteSingleAsync(context))"
+                               aria-label="@($"Borrar el mensaje {SubjectDecoder.ForDisplay(context.Subject)}")"
+                               OnClick="@(() => AskDeleteSingleAsync(context))"
                                data-testid="@($"delete-{context.Id}")" />
             </MudTd>
         </RowTemplate>
     </MudTable>
 
     <div class="d-flex align-center justify-space-between mt-3 flex-wrap gap-2">
-        <MudText Typo="Typo.body2" data-testid="page-info">@PageInfo</MudText>
+        <MudText Typo="Typo.body2" data-testid="page-info" aria-live="polite">@PageInfo</MudText>
         <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
             <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="@(!_result.HasPreviousPage)"
+                           aria-label="Página anterior"
                            OnClick="@(() => GoToPageAsync(_result.Page - 1))" data-testid="previous-page" />
             <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="@(!_result.HasNextPage)"
+                           aria-label="Página siguiente"
                            OnClick="@(() => GoToPageAsync(_result.Page + 1))" data-testid="next-page" />
         </MudButtonGroup>
     </div>

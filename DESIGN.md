@@ -6,7 +6,7 @@ componentes, empaquetado (incluido el de los assets estáticos de Blazor) y estr
 - **Paquete objetivo:** `net10.0`
 - **Lenguaje:** C# 14 (`LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors`)
 - **Formato de solución:** `slnx` (solución de .NET 10) o `sln` clásica si la tooling lo exige
-- **Versión del documento:** v2.2 (v2.0: Blazor Web App en lugar de API HTTP; v2.1: ajuste del puerto por defecto de la UI y scripts nuevos; v2.2: se retira el soporte de macOS)
+- **Versión del documento:** v2.3 (v2.0: Blazor Web App en lugar de API HTTP; v2.1: ajuste del puerto por defecto de la UI y scripts nuevos; v2.2: se retira el soporte de macOS; v2.3: estilo Material You dark del prototipo y accesibilidad)
 
 > Cambio de rumbo aplicado: se elimina la API HTTP (proyecto `Api`, endpoints, OpenAPI, CORS) y se
 > agrega `SmtpMockup.Web` (Blazor Web App, Interactive Server) dentro del mismo proceso. Ver §11.
@@ -408,3 +408,17 @@ referencias documentales y el memory-bank; ver `SPEC.md` §13. En la práctica:
 - Soporte de macOS: la matriz de CI pasa a `[ubuntu-latest, windows-latest]`, se elimina el job de
   publish `osx-arm64` y RNF-05/RNF-09 (SPEC) dejan de nombrar macOS. `PfxKeyStorage` mantiene la
   clave efímera solo en Linux (Windows no la usa en el handshake).
+
+### v2.3 — se agregó (2026-10-06)
+- Estilo visual Material You dark adoptado del prototipo `docs/UI-Prototype/` (SPEC §9.8):
+  - `src/SmtpMockup.Web/Theme/MockupTheme.cs`: `MudTheme` con la paleta teal/azul, Inter y radios
+    de 12px del export. Único sitio donde viven los colores que dibuja MudBlazor.
+  - `wwwroot/app.css`: tokens `--md-*` del export + piezas del prototipo que MudBlazor no trae
+    (barra superior, nav rail, bottom nav, tarjetas de estadísticas, snackbar, diálogo M3).
+  - `MainLayout.razor`: shell del export — barra superior con `Web:Title`, nav rail de cuatro
+    destinos (bottom nav ≤768px) y `<main id="main-content">`; antes la navegación vivía dentro del
+    `MudAppBar` y desbordaba en pantallas estrechas.
+- Accesibilidad: `<h1>` por página (habilita `FocusOnNavigate`), skip link, `<th scope="row">`,
+  `aria-label` en controles de icono, `aria-live` en contadores, `fieldset`/`legend` en filtros,
+  `aria-labelledby`/`describedby` + foco inicial en el diálogo, `prefers-reduced-motion`.
+  Cubierto por `tests/SmtpMockup.Web.Tests/AccessibilityTests.cs`.

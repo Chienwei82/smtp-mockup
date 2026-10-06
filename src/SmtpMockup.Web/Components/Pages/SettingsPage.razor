@@ -4,47 +4,41 @@
 
 <PageHeader Text="Estado" />
 
-<MudText Typo="Typo.h5" Class="mb-4">Estado del proceso</MudText>
+<MudText Typo="Typo.h1" Class="mb-4">Estado del proceso</MudText>
 
-<MudGrid Class="mb-4">
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Tiempo activo</MudText>
-            <MudText Typo="Typo.h5" data-testid="uptime">@Uptime</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Mensajes almacenados</MudText>
-            <MudText Typo="Typo.h5" data-testid="stored-count">@_storedCount</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4" Elevation="1">
-            <MudText Typo="Typo.body2">Directorio escribible</MudText>
-            <MudChip T="string" Color="@(_writable ? Color.Success : Color.Error)" data-testid="writable">
-                @(_writable ? "sí" : "no")
-            </MudChip>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+<div class="stat-grid">
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Tiempo activo</div>
+        <div class="stat-value" data-testid="uptime">@Uptime</div>
+    </MudPaper>
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Mensajes almacenados</div>
+        <div class="stat-value" data-testid="stored-count">@_storedCount</div>
+    </MudPaper>
+    <MudPaper Class="stat-card" Elevation="0">
+        <div class="stat-card__label">Directorio escribible</div>
+        <MudChip T="string" Color="@(_writable ? Color.Success : Color.Error)" data-testid="writable">
+            @(_writable ? "sí" : "no")
+        </MudChip>
+    </MudPaper>
+</div>
 
-<MudPaper Class="pa-4" Elevation="1">
-    <MudText Typo="Typo.h6" Class="mb-3">Configuración efectiva</MudText>
+<MudPaper Class="pa-4" Elevation="0">
+    <MudText Typo="Typo.h2" Class="section-title">Configuración efectiva</MudText>
     <MudSimpleTable Dense="true" Elevation="0" data-testid="effective-config">
         <tbody>
-            <tr><td>SMTP plano</td><td>@Endpoint(_config.Smtp.Plain)</td></tr>
-            <tr><td>SMTP STARTTLS</td><td>@Endpoint(_config.Smtp.StartTls)</td></tr>
-            <tr><td>Tamaño máximo de mensaje</td><td>@_config.Smtp.MaxMessageSizeMb MB</td></tr>
-            <tr><td>Certificado</td><td>@_config.Certificate.Mode — <code>@_config.Certificate.Path</code></td></tr>
-            <tr><td>Directorio de mensajes</td><td><code>@StorageDirectory</code></td></tr>
-            <tr><td>MIME crudo</td><td>@(_config.Storage.KeepRawMime ? "conservado" : "descartado")</td></tr>
-            <tr><td>UI</td><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
-            <tr><td>Vigilancia del directorio</td><td>@(_config.Web.WatchDirectory ? "activa" : "desactivada")</td></tr>
-            <tr><td>Actualización en vivo</td><td>debounce de @_config.Web.LiveUpdateDebounceMilliseconds ms</td></tr>
-            <tr><td>Paginación</td><td>@_config.Web.DefaultPageSize por defecto, tope @_config.Web.MaxPageSize</td></tr>
-            <tr><td>Límite de HTML</td><td>@_config.Web.MaxHtmlPreviewBytes bytes</td></tr>
-            <tr><td>Registro</td><td>@_config.Hosting.Mode — @_config.Hosting.LogDirectory</td></tr>
+            <tr><th scope="row">SMTP plano</th><td>@Endpoint(_config.Smtp.Plain)</td></tr>
+            <tr><th scope="row">SMTP STARTTLS</th><td>@Endpoint(_config.Smtp.StartTls)</td></tr>
+            <tr><th scope="row">Tamaño máximo de mensaje</th><td>@_config.Smtp.MaxMessageSizeMb MB</td></tr>
+            <tr><th scope="row">Certificado</th><td>@_config.Certificate.Mode — <code>@_config.Certificate.Path</code></td></tr>
+            <tr><th scope="row">Directorio de mensajes</th><td><code>@StorageDirectory</code></td></tr>
+            <tr><th scope="row">MIME crudo</th><td>@(_config.Storage.KeepRawMime ? "conservado" : "descartado")</td></tr>
+            <tr><th scope="row">UI</th><td>@(_config.Web.Enabled ? EndpointAddress.FormatHttpUrl(_config.Web.BindAddress, _config.Web.Port) : "deshabilitada")</td></tr>
+            <tr><th scope="row">Vigilancia del directorio</th><td>@(_config.Web.WatchDirectory ? "activa" : "desactivada")</td></tr>
+            <tr><th scope="row">Actualización en vivo</th><td>debounce de @_config.Web.LiveUpdateDebounceMilliseconds ms</td></tr>
+            <tr><th scope="row">Paginación</th><td>@_config.Web.DefaultPageSize por defecto, tope @_config.Web.MaxPageSize</td></tr>
+            <tr><th scope="row">Límite de HTML</th><td>@_config.Web.MaxHtmlPreviewBytes bytes</td></tr>
+            <tr><th scope="row">Registro</th><td>@_config.Hosting.Mode — @_config.Hosting.LogDirectory</td></tr>
         </tbody>
     </MudSimpleTable>
 </MudPaper>
